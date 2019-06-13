@@ -1,6 +1,5 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="Cache-Control" content="no-cache" />
@@ -33,12 +32,12 @@
     window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
 
     var channelName = '<%= channel %>';
-    var localVideo = document.getElementById('local_video');
+    var localVideo =  document.getElementById('local_video');
     //var playbackVideo =  document.getElementById('playback_video');
     //var ancher = document.getElementById('downloadlink');
     var watchDiv = document.getElementById('watch_link');
     var localStream = null;
-    var recorder = null;
+    var recorder =  null;
     var blobUrl = null;
     var blobUrls = [];
     var recordIndex = 0;
@@ -74,6 +73,7 @@
                 formData.append("blob_index", postIndex);
                 formData.append("blob_sec", postSec);
                 var xhr = new XMLHttpRequest();
+
                 xhr.onreadystatechange = function () {
                     if ((xhr.readyState == 4) && (xhr.status == 200)) {
                         console.log("xhr finish. response= " + xhr.responseText);
@@ -112,6 +112,7 @@
 
     // Request the usermedia
     function startVideo() {
+
         navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
             localStream = stream;
             localVideo.srcObject = stream;
@@ -127,7 +128,6 @@
             localStream.stop();
             localStream = null;
         }
-    }	
+    }
 </script>
-
 </html>
