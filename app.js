@@ -211,7 +211,7 @@ app.post('/upload/:channel', function (req, res) {
   });
 });
 
-app.listen(host='0.0.0.0', port);
+app.listen(port, '0.0.0.0');
 console.log('server listen start port ' + port);
 
 function writeWebM(filename, buf, endPosition) {
