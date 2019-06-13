@@ -1,13 +1,19 @@
-var multiparty = require('multiparty')
-var express = require('express');
-var path = require('path');
-var fs = require('fs');
-var uuid = require('node-uuid');
-var clusterIntervalSec = 5;
+const multiparty = require('multiparty')
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const uuid = require('node-uuid');
+const clusterIntervalSec = 5;
 
-var port = process.env.PORT || 8000;
-var serverURL = 'loalhost:' + port;
+const port = process.env.PORT || 8000;
+const serverURL = 'loalhost:' + port;
 
+const https = require('https');
+
+const httpOptions =  {
+    key: fs.readFileSync("keys/privatekey.pem"),
+    cert: fs.readFileSync("keys/certificate.pem")
+};
 
 class ChannelStatus {
   constructor(){
@@ -211,7 +217,7 @@ app.post('/upload/:channel', function (req, res) {
   });
 });
 
-app.listen(port, '0.0.0.0');
+https.createServer(httpOptions, app).listen(port, '0.0.0.0');
 console.log('server listen start port ' + port);
 
 function writeWebM(filename, buf, endPosition) {
