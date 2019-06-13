@@ -5,7 +5,7 @@ var fs = require('fs');
 var uuid = require('node-uuid');
 var clusterIntervalSec = 5;
 
-var port = 8000;
+var port = process.env.PORT || 8000;
 var serverURL = 'loalhost:' + port;
 
 
@@ -211,7 +211,7 @@ app.post('/upload/:channel', function (req, res) {
   });
 });
 
-app.listen(process.env.port || port);
+app.listen(port);
 console.log('server listen start port ' + port);
 
 function writeWebM(filename, buf, endPosition) {
