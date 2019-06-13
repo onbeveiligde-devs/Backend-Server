@@ -2,8 +2,6 @@ var multiparty = require('multiparty')
 var express = require('express');
 var path = require('path');
 var fs = require('fs');
-var stream = require('stream');
-var util = require('util');
 var uuid = require('node-uuid');
 var clusterIntervalSec = 5;
 
@@ -11,16 +9,18 @@ var port = 8000;
 var serverURL = 'loalhost:' + port;
 
 
-function ChannelStatus() {
-  var name = '';
-  var uuid = '';
-  var dir = '';
-  var isOnAir = false;
-  var currentSeq = 0;
-  var currentSec = 0;
-  var storedSec = 0;
-  var filePrefix = '';
-};
+class ChannelStatus {
+  constructor(){
+    this.name = '';
+    this.uuid = '';
+    this.dir = '';
+    this.isOnAir = false;
+    this.currentSeq = 0;
+    this.currentSec = 0;
+    this.storedSec = 0;
+    this.filePrefix = '';
+  }
+}
 var channels = {}; // channel status has
 
 function startChannel(name) {
@@ -46,7 +46,9 @@ function startChannel(name) {
 
   // make directory
   fs.mkdir(channelStatus.dir, function (err) {
-    console.log('mkdir:' + channelStatus.dir + ' err=' + err);
+    if (err){
+      console.log('mkdir:' + channelStatus.dir + ' err=' + err);
+    }
   });
 
   return channelStatus;
@@ -75,13 +77,12 @@ app.get('/watch/:channel', function (req, res) {
     res.end('not found');
     return;
   }
-  //var streamUuid = uuid.v1() + '--' +  uuid.v4(); 
   var streamUuid = uuid.v1() + '--' + channelStatus.storedSec;
   console.log('get /watch/' + channel + ' uuid=' + streamUuid);
   res.render('watch', { title: 'watch ' + channel, channel: channel, uuid: streamUuid, server: serverURL });
 });
 
-app.get('/stream/:channel', function (req, res) { // this way is ok , with combined-stream
+app.get('/stream/:channel', function (req, res) { 
   var channel = req.params.channel;
   console.log('get /stream/' + channel);
   var channelStatus = getChannelStatus(channel);
@@ -122,15 +123,12 @@ app.get('/stream/:channel', function (req, res) { // this way is ok , with combi
         appendFile(res);
       });
 
-      var listners = readStream.listeners('end');
-      var count = listners.length;
-
-      console.log('-pipe readStream to res : ' + filename + ' -');
+      var listeners = readStream.listeners('end');
+      var count = listeners.length;
       readStream.pipe(res);
-
-      listners = readStream.listeners('end');
-      var listner = listners[count];
-      readStream.removeListener('end', listner);
+      listeners = readStream.listeners('end');
+      var listener = listeners[count];
+      readStream.removeListener('end', listener);
     }
     else {
       sleepCount++;
@@ -191,8 +189,8 @@ app.post('/upload/:channel', function (req, res) {
     var postIndex = fields.blob_index[0];
     var postSec = fields.blob_sec[0];
     var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-    var buf = new Buffer(fields.blob_base64[0], 'base64'); // decode
-    writeWebm(filename, buf, buf.length);
+    var buf = Buffer.from(fields.blob_base64[0], 'base64'); 
+    writeWebM(filename, buf, buf.length);
     channelStatus.currentSeq = postIndex;
     channelStatus.currentSec = postSec;
     channelStatus.storedSec = postSec;
@@ -216,12 +214,12 @@ app.post('/upload/:channel', function (req, res) {
 app.listen(process.env.port || port);
 console.log('server listen start port ' + port);
 
-function writeWebm(filename, buf, endPosition) {
-  console.log('writeWebmCluster()');
-  var wstream = fs.createWriteStream(filename);
+function writeWebM(filename, buf, endPosition) {
+  console.log('writeWebMCluster() ' + filename);
+  var writeStream = fs.createWriteStream(filename);
   var bufToWrite = buf.slice(0, endPosition);
-  wstream.write(bufToWrite);
-  wstream.end();
+  writeStream.write(bufToWrite);
+  writeStream.end();
 }
 
 
