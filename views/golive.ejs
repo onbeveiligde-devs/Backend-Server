@@ -1,32 +1,33 @@
 <!DOCTYPE HTML>
 <html>
 <head>
- <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
- <meta http-equiv="Cache-Control" content="no-cache" />
- <title><%= title %></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <title><%= title %></title>
 </head>
+
 <body>
-<h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
-<button id="start_button" onclick="startVideo()">Start Video</button>
-<button id="start_record_button" onclick="startRecording();">Start Live</button>
-<button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
-<button id="stop_button" onclick="stopVideo()">Stop Video</button>
+    <h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
+    <button id="start_button" onclick="startVideo()">Start Video</button>
+    <button id="start_record_button" onclick="startRecording();">Start Live</button>
+    <button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
+    <button id="stop_button" onclick="stopVideo()">Stop Video</button>
 
-<!--
-<button id="play_button" onclick="playRecorded()">Play</button>
-<a href="#" id="downloadlink" class="download">Download</a>
--->
+    <!--
+  <button id="play_button" onclick="playRecorded()">Play</button>
+  <a href="#" id="downloadlink" class="download">Download</a>
+  -->
 
-<br />
-<video id="local_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
-<!--
-<video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
--->
-<div id="watch_link"></div>
+    <br />
+    <video id="local_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
+    <!--
+  <video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
+  -->
+    <div id="watch_link"></div>
 
 </body>
 <script>
-    navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     window.RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
     window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
 
@@ -47,7 +48,7 @@
 
 
     function startRecording() {
-        if (! localStream) {
+        if (!localStream) {
             console.error("no stream");
             return;
         }
@@ -58,12 +59,12 @@
             recorder = new MediaRecorder(localStream);
         }
 
-        recorder.ondataavailable = function(evt) {
+        recorder.ondataavailable = function (evt) {
             console.log("data available, recordIndex=", recordIndex, " start playback. type=", evt.data.type);
             var videoBlob = new Blob([evt.data], { type: evt.data.type });
             console.log("Blob size=" + videoBlob.size);
 
-            blobToBase64(videoBlob, function(base64) {
+            blobToBase64(videoBlob, function (base64) {
                 // --- post to server ---
                 postSec = postIndex * intervalSec;
                 var formData = new FormData();
@@ -72,8 +73,9 @@
                 formData.append("blob_index", postIndex);
                 formData.append("blob_sec", postSec);
                 var xhr = new XMLHttpRequest();
-                xhr.onreadystatechange = function() {
-                    if ( (xhr.readyState == 4) && (xhr.status == 200) ) {
+
+                xhr.onreadystatechange = function () {
+                    if ((xhr.readyState == 4) && (xhr.status == 200)) {
                         console.log("xhr finish. response= " + xhr.responseText);
                     }
                 }
@@ -100,7 +102,7 @@
 
     function blobToBase64(blob, callback) {
         var reader = new FileReader();
-        reader.onload = function() {
+        reader.onload = function () {
             var dataUrl = reader.result;
             var base64 = dataUrl.split(',')[2];
             callback(base64);
@@ -110,17 +112,13 @@
 
     // Request the usermedia
     function startVideo() {
-        navigator.getUserMedia({video: true, audio: true}, showMedia, errCallback);
-        //navigator.getUserMedia({video: true, audio: false}, showMedia, errCallback);
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            localStream = stream;
+            localVideo.srcObject = stream;
+            localVideo.volume = 0;
+        });
     }
-    function showMedia(stream) {
-        localStream  = stream;
-        localVideo.srcObject = stream;
-        localVideo.volume = 0;
-    }
-    var errCallback = function(e) {
-        console.log('media error', e);
-    };
 
     function stopVideo() {
         if (localStream) {
@@ -133,4 +131,3 @@
     }
 </script>
 </html>
-
