@@ -1,36 +1,28 @@
 {
-  "name": "node-media-server",
-  "version": "2.1.0",
-  "description": "A Node.js implementation of RTMP Server",
-  "main": "node_media_server.js",
+  "name": "wmls",
+  "version": "0.0.1",
+  "description": "WebM Live Streaming",
+  "main": "app.js",
   "scripts": {
-    "test": "node app.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/illuspas/Node-Media-Server.git"
+    "url": "git://github.com/mganeko/wmls"
   },
   "keywords": [
-    "rtmp",
-    "flv",
-    "server"
+    "getUserMedia"
   ],
-  "author": "Mingliang Chen",
+  "author": "mganeko",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/illuspas/Node-Media-Server/issues"
+    "url": "https://github.com/mganeko/wmls/issues"
   },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
+  "homepage": "https://github.com/mganeko/wmls",
   "dependencies": {
-    "basic-auth-connect": "^1.0.0",
-    "chalk": "^2.4.2",
-    "dateformat": "^3.0.3",
-    "express": "^4.16.4",
-    "lodash": "^4.17.11",
-    "mkdirp": "^0.5.1",
-    "ws": "^5.2.2"
-  },
-  "engines": {
-    "node": ">=8.0.0"
+    "multiparty": "^4.1.2",
+    "express": "^4.12.3",
+    "node-uuid": "^1.4.3",
+    "ejs": "^2.3.1"
   }
 }
