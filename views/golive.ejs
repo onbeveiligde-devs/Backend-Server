@@ -19,7 +19,7 @@
   -->
 
     <br />
-    <video id="local_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
+    <video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
     <!--
   <video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
   -->
@@ -113,7 +113,19 @@
     // Request the usermedia
     function startVideo() {
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+        navigator.mediaDevices.getUserMedia({ video:
+            {
+                optional: [
+                    {minWidth: 320},
+                    {minWidth: 640},
+                    {minWidth: 1024},
+                    {minWidth: 1280},
+                    {minWidth: 1920},
+                    {minWidth: 2560},
+                ]
+            },
+            audio: true
+        }).then((stream) => {
             localStream = stream;
             localVideo.srcObject = stream;
             localVideo.volume = 0;
@@ -123,7 +135,7 @@
     function stopVideo() {
         if (localStream) {
             localVideo.pause();
-            localVideo.src = "";
+            localVideo.srcDoc = "";
 
             localStream.stop();
             localStream = null;
