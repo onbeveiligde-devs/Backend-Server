@@ -213,7 +213,7 @@ app.post('/upload/:channel', function (req, res) {
   });
 });
 
-app.listen(port);
+app.listen(process.env.port || port);
 console.log('server listen start port ' + port);
 
 function writeWebm(filename, buf, endPosition) {
