@@ -3,22 +3,35 @@ var express = require('express');
 var path = require('path');
 var fs = require('fs');
 var uuid = require('node-uuid');
-var clusterIntervalSec = 5;
 
 var port = 8000;
 var serverURL = 'loalhost:' + port;
 
 
 class ChannelStatus {
-  constructor(){
+  constructor() {
     this.name = '';
     this.uuid = '';
     this.dir = '';
     this.isOnAir = false;
     this.currentSeq = 0;
-    this.currentSec = 0;
     this.storedSec = 0;
     this.filePrefix = '';
+    this.watchers = [];
+  }
+
+  set currentSec(val) {
+    this.currentSecValue = val;
+    this.watchers.forEach((watcher) => {
+      console.log("Trying to stream: " + this.currentSecValue);
+      if (watcher.ready){
+        streamFile(watcher.response, this.filePrefix + '_' + this.currentSecValue + '.webm', watcher);
+      }
+    });
+  }
+
+  get currentSec() {
+    return this.currentSecValue;
   }
 }
 var channels = {}; // channel status has
@@ -26,11 +39,9 @@ var channels = {}; // channel status has
 function startChannel(name) {
   var channelStatus = channels[name];
   if (!channelStatus) {
-    // create new channel
     channelStatus = new ChannelStatus();
   }
   else if (channelStatus.isOnAir) {
-    // already onAir
     return null;
   }
 
@@ -38,15 +49,11 @@ function startChannel(name) {
   channelStatus.uuid = uuid.v1();
   channelStatus.dir = path.join(__dirname, 'mov', 'd_' + name + '_' + channelStatus.uuid);
   channelStatus.filePrefix = path.join(channelStatus.dir, 'v_' + channelStatus.name);
-  channelStatus.isOnAir = true;
-  channelStatus.currentSeq = 0;
-  channelStatus.currentSec = 0;
-  channelStatus.storedSec = 0;
   channels[name] = channelStatus;
 
   // make directory
   fs.mkdir(channelStatus.dir, function (err) {
-    if (err){
+    if (err) {
       console.log('mkdir:' + channelStatus.dir + ' err=' + err);
     }
   });
@@ -82,7 +89,7 @@ app.get('/watch/:channel', function (req, res) {
   res.render('watch', { title: 'watch ' + channel, channel: channel, uuid: streamUuid, server: serverURL });
 });
 
-app.get('/stream/:channel', function (req, res) { 
+app.get('/stream/:channel', function (req, res) {
   var channel = req.params.channel;
   console.log('get /stream/' + channel);
   var channelStatus = getChannelStatus(channel);
@@ -93,72 +100,45 @@ app.get('/stream/:channel', function (req, res) {
     return;
   }
 
-  var streamPosSec = Number(channelStatus.storedSec);
-  var headerAppended = false;
-  var sleepCount = 0;
-  var sleepCountMax = 10;
-  function appendFile(res) {
-    var filename;
-    if (!headerAppended) {
-      filename = channelStatus.filePrefix + '_' + 0 + '.webm';
-    }
-    else {
-      filename = channelStatus.filePrefix + '_' + streamPosSec + '.webm';
-    }
+  res.writeHead(200, { 'Content-Type': 'video/webm', 'Cache-Control': 'no-cache, no-store' });
 
-    if (fs.existsSync(filename)) {
-      console.log('file EXIST:' + filename);
-      sleepCount = 0;
-      // --- create read stream ---
-      var readStream = fs.createReadStream(filename);
-      readStream.on('error', onError);
-      readStream.on('end', function () {
-        readStream.unpipe(res);
-        if (!headerAppended) {
-          headerAppended = true;
-        }
-        else {
-          streamPosSec += clusterIntervalSec;
-        }
-        appendFile(res);
-      });
-
-      var listeners = readStream.listeners('end');
-      var count = listeners.length;
-      readStream.pipe(res);
-      listeners = readStream.listeners('end');
-      var listener = listeners[count];
-      readStream.removeListener('end', listener);
-    }
-    else {
-      sleepCount++;
-      if (sleepCount > sleepCountMax) {
-        console.error('TOO MANY times to sleep.');
-        res.end();
-        return;
-      }
-
-      var tryInterval = 1000; // mili sec
-      setTimeout(appendFile, tryInterval, res);
-    }
-  }
-
+  //stream video header
+  var filename = channelStatus.filePrefix + '_' + 0 + '.webm';
+  var watcher = { response: res, ready: false };
+  
+  streamFile(res, filename, channelStatus.watchers[channelStatus.watchers.push(watcher) - 1]);
 
   res.on('close', function () {
-    console.log('CLOSE on response stream');  // close event fired, when browser window closes
+    console.log('Close');  // close event fired, when browser window closes
+    channelStatus.watchers.splice(channelStatus.watchers.indexOf(watcher), 1);
   });
   res.on('end', function () {
-    console.log('!!!!! END on response stream');
+    console.log('End');
+    channelStatus.watchers.splice(channelStatus.watchers.indexOf(watcher), 1);
   });
 
-  res.writeHead(200, { 'Content-Type': 'video/webm', 'Cache-Control': 'no-cache, no-store' });
-  appendFile(res);
   return;
-
-  function onError(err) {
-    console.error('ERROR on readStream, ', err);
-  }
 });
+
+function streamFile(res, fileName, watcher) {
+  watcher.ready = false;
+  if (fs.existsSync(fileName)) {
+    var readStream = fs.createReadStream(fileName);
+    readStream.on('error', (err) => { console.log(err); });
+    readStream.on('end', () => {
+      readStream.unpipe(res);
+      watcher.ready = true;
+    });
+    var listeners = readStream.listeners('end');
+    var count = listeners.length;
+    readStream.pipe(res);
+    listeners = readStream.listeners('end');
+    var listener = listeners[count];
+    readStream.removeListener('end', listener);
+    console.log('Streaming:' + fileName);
+  }
+}
+
 app.get('/golive/:channel', function (req, res) {
   var channel = req.params.channel;
   var channelStatus = startChannel(channel);
@@ -189,7 +169,7 @@ app.post('/upload/:channel', function (req, res) {
     var postIndex = fields.blob_index[0];
     var postSec = fields.blob_sec[0];
     var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-    var buf = Buffer.from(fields.blob_base64[0], 'base64'); 
+    var buf = Buffer.from(fields.blob_base64[0], 'base64');
     writeWebM(filename, buf, buf.length);
     channelStatus.currentSeq = postIndex;
     channelStatus.currentSec = postSec;
@@ -215,7 +195,7 @@ app.listen(process.env.port || port);
 console.log('server listen start port ' + port);
 
 function writeWebM(filename, buf, endPosition) {
-  console.log('writeWebMCluster() ' + filename);
+  //console.log('writeWebMCluster() ' + filename);
   var writeStream = fs.createWriteStream(filename);
   var bufToWrite = buf.slice(0, endPosition);
   writeStream.write(bufToWrite);
