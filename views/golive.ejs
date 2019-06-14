@@ -64,7 +64,14 @@
             var videoBlob = new Blob([evt.data], { type: evt.data.type });
             console.log("Blob size=" + videoBlob.size);
 
+            console.log('blob is');
+            console.log(videoBlob);
+
             blobToBase64(videoBlob, function (base64) {
+
+                console.log('de base64 van de blob is');
+                console.log(base64);
+
                 // --- post to server ---
                 postSec = postIndex * intervalSec;
                 var formData = new FormData();
@@ -105,6 +112,11 @@
         reader.onload = function () {
             var dataUrl = reader.result;
             var base64 = dataUrl.split(',')[2];
+
+            if(base64 == null) {
+                base64 = dataUrl.split(',')[1];
+            }
+
             callback(base64);
         };
         reader.readAsDataURL(blob);
