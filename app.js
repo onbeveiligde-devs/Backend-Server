@@ -5,7 +5,7 @@ var fs = require('fs');
 var uuid = require('node-uuid');
 
 var port = 8000;
-var serverURL = 'loalhost:' + port;
+var serverURL = 'localhost:' + port;
 
 
 class ChannelStatus {
@@ -102,10 +102,11 @@ app.get('/stream/:channel', function (req, res) {
 
   res.writeHead(200, { 'Content-Type': 'video/webm', 'Cache-Control': 'no-cache, no-store' });
 
-  //stream video header
+  
   var filename = channelStatus.filePrefix + '_' + 0 + '.webm';
   var watcher = { response: res, ready: false };
   
+  console.log("Streaming header")
   streamFile(res, filename, channelStatus.watchers[channelStatus.watchers.push(watcher) - 1]);
 
   res.on('close', function () {
@@ -126,16 +127,14 @@ function streamFile(res, fileName, watcher) {
     var readStream = fs.createReadStream(fileName);
     readStream.on('error', (err) => { console.log(err); });
     readStream.on('end', () => {
+      console.log("done streaming");
       readStream.unpipe(res);
       watcher.ready = true;
     });
-    var listeners = readStream.listeners('end');
-    var count = listeners.length;
+
     readStream.pipe(res);
-    listeners = readStream.listeners('end');
-    var listener = listeners[count];
-    readStream.removeListener('end', listener);
-    console.log('Streaming:' + fileName);
+    //Remove a listener so the response stays open
+    readStream.removeListener('end', readStream.listeners('end')[2]);
   }
 }
 
@@ -152,7 +151,9 @@ app.post('/upload/:channel', function (req, res) {
   var channel = req.params.channel;
   var channelStatus = getChannelStatus(channel);
   if (!channelStatus) {
-    console.error('ERROR. channel:' + channel + ' not ready for onAir');
+    res.writeHead(500, { 'content-type': 'text/plain' });
+    res.end('Server Error');
+    return;
   }
 
   var form = new multiparty.Form({ maxFieldsSize: 4096 * 1024 });
