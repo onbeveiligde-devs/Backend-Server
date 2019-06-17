@@ -19,7 +19,7 @@
   -->
 
     <br />
-    <video id="local_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
+    <video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
     <!--
   <video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
   -->
@@ -64,7 +64,14 @@
             var videoBlob = new Blob([evt.data], { type: evt.data.type });
             console.log("Blob size=" + videoBlob.size);
 
+            console.log('blob is');
+            console.log(videoBlob);
+
             blobToBase64(videoBlob, function (base64) {
+
+                console.log('de base64 van de blob is');
+                console.log(base64);
+
                 // --- post to server ---
                 postSec = postIndex * intervalSec;
                 var formData = new FormData();
@@ -105,6 +112,11 @@
         reader.onload = function () {
             var dataUrl = reader.result;
             var base64 = dataUrl.split(',')[2];
+
+            if(base64 == null) {
+                base64 = dataUrl.split(',')[1];
+            }
+
             callback(base64);
         };
         reader.readAsDataURL(blob);
@@ -113,7 +125,19 @@
     // Request the usermedia
     function startVideo() {
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+        navigator.mediaDevices.getUserMedia({ video:
+            {
+                optional: [
+                    {minWidth: 320},
+                    {minWidth: 640},
+                    {minWidth: 1024},
+                    {minWidth: 1280},
+                    {minWidth: 1920},
+                    {minWidth: 2560},
+                ]
+            },
+            audio: true
+        }).then((stream) => {
             localStream = stream;
             localVideo.srcObject = stream;
             localVideo.volume = 0;
@@ -123,7 +147,7 @@
     function stopVideo() {
         if (localStream) {
             localVideo.pause();
-            localVideo.src = "";
+            localVideo.srcDoc = "";
 
             localStream.stop();
             localStream = null;

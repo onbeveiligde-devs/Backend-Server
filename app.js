@@ -4,9 +4,15 @@ var path = require('path');
 var fs = require('fs');
 var uuid = require('node-uuid');
 
-var port = 8000;
+const port = process.env.PORT || 8000;
 var serverURL = 'localhost:' + port;
 
+const https = require('https');
+
+const httpOptions =  {
+    key: fs.readFileSync("keys/privatekey.pem"),
+    cert: fs.readFileSync("keys/certificate.pem")
+};
 
 class ChannelStatus {
   constructor() {
@@ -192,7 +198,7 @@ app.post('/upload/:channel', function (req, res) {
   });
 });
 
-app.listen(process.env.port || port);
+app.listen(port, '0.0.0.0');
 console.log('server listen start port ' + port);
 
 function writeWebM(filename, buf, endPosition) {
@@ -202,6 +208,3 @@ function writeWebM(filename, buf, endPosition) {
   writeStream.write(bufToWrite);
   writeStream.end();
 }
-
-
-
