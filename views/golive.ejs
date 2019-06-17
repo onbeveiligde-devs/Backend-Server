@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="Cache-Control" content="no-cache" />
@@ -32,12 +33,12 @@
     window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
 
     var channelName = '<%= channel %>';
-    var localVideo =  document.getElementById('local_video');
+    var localVideo = document.getElementById('local_video');
     //var playbackVideo =  document.getElementById('playback_video');
     //var ancher = document.getElementById('downloadlink');
     var watchDiv = document.getElementById('watch_link');
     var localStream = null;
-    var recorder =  null;
+    var recorder = null;
     var blobUrl = null;
     var blobUrls = [];
     var recordIndex = 0;
@@ -60,6 +61,7 @@
         }
 
         recorder.ondataavailable = function (evt) {
+            console.log(evt);
             console.log("data available, recordIndex=", recordIndex, " start playback. type=", evt.data.type);
             var videoBlob = new Blob([evt.data], { type: evt.data.type });
             console.log("Blob size=" + videoBlob.size);
@@ -113,7 +115,7 @@
             var dataUrl = reader.result;
             var base64 = dataUrl.split(',')[2];
 
-            if(base64 == null) {
+            if (base64 == null) {
                 base64 = dataUrl.split(',')[1];
             }
 
@@ -125,15 +127,16 @@
     // Request the usermedia
     function startVideo() {
 
-        navigator.mediaDevices.getUserMedia({ video:
+        navigator.mediaDevices.getUserMedia({
+            video:
             {
                 optional: [
-                    {minWidth: 320},
-                    {minWidth: 640},
-                    {minWidth: 1024},
-                    {minWidth: 1280},
-                    {minWidth: 1920},
-                    {minWidth: 2560},
+                    { minWidth: 320 },
+                    { minWidth: 640 },
+                    { minWidth: 1024 },
+                    { minWidth: 1280 },
+                    { minWidth: 1920 },
+                    { minWidth: 2560 },
                 ]
             },
             audio: true
@@ -154,4 +157,5 @@
         }
     }
 </script>
+
 </html>

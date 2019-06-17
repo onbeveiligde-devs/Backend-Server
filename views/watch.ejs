@@ -1,43 +1,129 @@
 <!DOCTYPE HTML>
 <html>
- <head>
+
+<head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Cache-Control" content="no-cache" />
   <title><%= title %></title>
- </head>
- <body>
+</head>
+
+<body>
   Watch WebM Live Streaming : <%= channel %><br />
   <!-- watch in <a href='vlc://<%= server %>/stream/<%= channel %>?uuid=<%= uuid %>'>VLC for iOS</a><br /> -->
-  <video id="watch_video" width="320px" height="240px"  hidden style="border: 1px solid;">
-   <source src='/stream/<%= channel %>?uuid=<%= uuid %>' type='video/webm;' />
+  <video id="video" width="320px" height="240px" style="border: 1px solid;" controls>
+    <!-- <source src='/stream/<%= channel %>?uuid=<%= uuid %>' type='video/webm;' /> -->
   </video>
   <div id="timecode">not started</div>
   <button onclick="startWatching()" id="start" hidden>Start Watching</button>
- </body>
- <script>
-  var watchVideo = document.getElementById('watch_video');
+</body>
+<script>
+  var watchVideo = document.getElementById('video');
   var start = document.getElementById('start');
   var timeDiv = document.getElementById('timecode');
   var statusDiv = document.getElementById('status');
-  
-  watchVideo.muted = true;
-  watchVideo.play();
 
-  setTimeout(() =>{
-    watchVideo.currentTime = watchVideo.buffered.end(0) - 1;
-    start.style.display = "block";
-  }, 10000);
+  // watchVideo.muted = true;
+  // watchVideo.play();
 
-  function startWatching () {
-    watchVideo.style.display = "block";
-    watchVideo.muted = false;
-  }
+  // setTimeout(() =>{
+  //   watchVideo.currentTime = watchVideo.buffered.end(0) - 1;
+  //   start.style.display = "block";
+  // }, 10000);
+
+  // function startWatching () {
+  //   watchVideo.style.display = "block";
+  //   watchVideo.muted = false;
+  // }
 
   watchVideo.ontimeupdate = function() {
     timeDiv.innerHTML = 'time:' + watchVideo.currentTime + ' sec, buffered(' + watchVideo.buffered.start(0) + ' - ' + watchVideo.buffered.end(0) + ')'; 
   };
 
-  
- </script> 
-</html>
 
+
+  var queue = [];
+  var url = '/stream/<%= channel %>?uuid=<%= uuid %>';
+
+  // Check that browser has support for media codec
+  var mimeCodec = 'video/webm;codecs="vp8,vorbis';
+  console.log(MediaSource.isTypeSupported(mimeCodec));
+  // Create Media Source
+  var mediaSource = new MediaSource(); // mediaSource.readyState === 'closed'
+  // Attach media source to video element
+  watchVideo.src = URL.createObjectURL(mediaSource);;
+  // Wait for media source to be open
+  mediaSource.addEventListener('sourceopen', handleSourceOpen.bind(mediaSource));
+  function handleSourceOpen() {
+    var mediaSource = this; // mediaSource.readyState === 'open'
+    var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+    sourceBuffer.addEventListener('updateend', function () {
+      if (queue.length) {
+        sourceBuffer.appendBuffer(queue.shift());
+        console.log("Removing from queue");
+      }
+    }, false);
+
+
+    const decoder = new TextDecoder();
+    const encoder = new TextEncoder();
+
+    var chunkedUrl = '/stream/<%= channel %>?uuid=<%= uuid %>';
+    fetch(chunkedUrl)
+      .then(processChunkedResponse)
+      .then(onChunkedResponseComplete)
+      .catch(onChunkedResponseError)
+      ;
+
+    function onChunkedResponseComplete(result) {
+      console.log('all done!', result)
+    }
+
+    function onChunkedResponseError(err) {
+      console.error(err)
+    }
+
+    function processChunkedResponse(response) {
+      var reader = response.body.getReader()
+      var decoder = new TextDecoder();
+
+      return readChunk();
+
+      function readChunk() {
+        return reader.read().then(appendChunks);
+      }
+
+      function appendChunks(result) {
+        var text = decoder.decode(result.value);
+        if (text.includes("De hash")) {
+          text = text.substring(0, text.indexOf("De hash"));
+          console.log(text);
+          result.value = encoder.encode(text);
+        }
+
+          if (queue.length == 0 && !sourceBuffer.updating){
+            console.log("appending");
+            sourceBuffer.appendBuffer(result.value);
+          } else {
+            console.log("adding to queue");
+            queue.push(result.value);
+          }
+
+        if (result.done) {
+          return;
+        } else {
+          return readChunk();
+        }
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+</script>
+
+</html>

@@ -30,7 +30,7 @@ class ChannelStatus {
     this.currentSecValue = val;
     this.watchers.forEach((watcher) => {
       console.log("Trying to stream: " + this.currentSecValue);
-      if (watcher.ready){
+      if (watcher.ready && !watcher.response.finished){
         streamFile(watcher.response, this.filePrefix + '_' + this.currentSecValue + '.webm', watcher);
       }
     });
@@ -106,7 +106,7 @@ app.get('/stream/:channel', function (req, res) {
     return;
   }
 
-  res.writeHead(200, { 'Content-Type': 'video/webm', 'Cache-Control': 'no-cache, no-store' });
+  res.writeHead(200, { 'Content-Type': 'video/webm', 'Cache-Control': 'no-cache, no-store', 'Trailer': 'Sign'});
 
   
   var filename = channelStatus.filePrefix + '_' + 0 + '.webm';
@@ -135,9 +135,13 @@ function streamFile(res, fileName, watcher) {
     readStream.on('end', () => {
       console.log("done streaming");
       readStream.unpipe(res);
+      //res.write("De hash: " + fileName, 'utf8', () => {console.log('Send hash')});
       watcher.ready = true;
     });
 
+    res.addTrailers({
+      'Sign': fileName
+    });
     readStream.pipe(res);
     //Remove a listener so the response stays open
     readStream.removeListener('end', readStream.listeners('end')[2]);
