@@ -1,5 +1,5 @@
 // import libs
-require('dotenv').config({path: 'process.env'});
+require('dotenv').config({path: '.env'});
 const mongoose = require('mongoose');
 
 // use IS6 implementasion for Prommises
