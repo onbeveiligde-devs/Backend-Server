@@ -1,6 +1,9 @@
 mov/*
+src/mov/*
 !mov/rd.txt
+!src/mov/rd.txt
 stock/
+src/stock/
 node_modules/
 .settings/
 .vscode/
