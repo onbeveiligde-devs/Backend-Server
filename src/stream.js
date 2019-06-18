@@ -10,8 +10,8 @@ var serverURL = 'localhost:' + port;
 const https = require('https');
 
 const httpOptions = {
-    key: fs.readFileSync("keys/privatekey.pem"),
-    cert: fs.readFileSync("keys/certificate.pem")
+    key: fs.readFileSync("data/keys/privatekey.pem"),
+    cert: fs.readFileSync("data/keys/certificate.pem")
 };
 
 class ChannelStatus {
@@ -52,7 +52,7 @@ function startChannel(name) {
 
     channelStatus.name = name;
     channelStatus.uuid = uuid.v1();
-    channelStatus.dir = path.join(__dirname, 'mov', 'd_' + name + '_' + channelStatus.uuid);
+    channelStatus.dir = path.join(__dirname, 'data/mov', 'd_' + name + '_' + channelStatus.uuid);
     channelStatus.filePrefix = path.join(channelStatus.dir, 'v_' + channelStatus.name);
     channels[name] = channelStatus;
 
