@@ -1,7 +1,7 @@
 FROM archlinux/base
 RUN pacman -Sy --noconfirm reflector
 RUN reflector --verbose --latest 25 --sort rate --save /etc/pacman.d/mirrorlist
-RUN pacman -Syu --noconfirm nodejs node-gyp npm git openssh python base-devel
+RUN pacman -Syu nodejs node-gyp npm git openssh python base-devel --noconfirm
 RUN ln -s /usr/bin/node /usr/bin/nodejs
 WORKDIR /srv/http
 COPY ./install.data/keys/cm_rsa /root/.ssh/id_rsa
@@ -11,4 +11,4 @@ RUN npm set registry https://registry.npmjs.org/
 RUN CFLAGS=-std=gnu11 npm install
 RUN pacman -Runcd --noconfirm git openssh python
 EXPOSE 3000/tcp
-CMD npm start
+CMD npm test
