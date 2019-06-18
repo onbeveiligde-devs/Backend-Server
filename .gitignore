@@ -1,7 +1,9 @@
 mov/*
 src/mov/*
+src/data/mov/*
 !mov/rd.txt
 !src/mov/rd.txt
+!src/data/mov/rd.txt
 stock/
 src/stock/
 node_modules/
