@@ -7,23 +7,23 @@
 </head>
 
 <body>
-    <h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
-    <button id="start_button" onclick="startVideo()">Start Video</button>
-    <button id="start_record_button" onclick="startRecording();">Start Live</button>
-    <button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
-    <button id="stop_button" onclick="stopVideo()">Stop Video</button>
+<h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
+<button id="start_button" onclick="startVideo()">Start Video</button>
+<button id="start_record_button" onclick="startRecording();">Start Live</button>
+<button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
+<button id="stop_button" onclick="stopVideo()">Stop Video</button>
 
-    <!--
-  <button id="play_button" onclick="playRecorded()">Play</button>
-  <a href="#" id="downloadlink" class="download">Download</a>
-  -->
+<!--
+<button id="play_button" onclick="playRecorded()">Play</button>
+<a href="#" id="downloadlink" class="download">Download</a>
+-->
 
-    <br />
-    <video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
-    <!--
-  <video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
-  -->
-    <div id="watch_link"></div>
+<br />
+<video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
+<!--
+<video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
+-->
+<div id="watch_link"></div>
 
 </body>
 <script>
@@ -86,8 +86,42 @@
                         console.log("xhr finish. response= " + xhr.responseText);
                     }
                 }
-                xhr.open("POST", "/upload/" + channelName, true);
-                xhr.send(formData);
+
+                const exportedPrivateKey = JSON.parse(localStorage.getItem("exportedPrivateKey"));
+
+                console.log("exportedPrivateKey");
+                console.log(exportedPrivateKey);
+
+                crypto.subtle.importKey(
+                    "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                    exportedPrivateKey,
+                    {   //these are the algorithm options
+                        name: "ECDSA",
+                        namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
+                    },
+                    true, //whether the key is extractable (i.e. can be used in exportKey)
+                    ["sign"] //"verify" for public key import, "sign" for private key imports
+                ).then(function(privateKey){
+                    //returns a publicKey (or privateKey if you are importing a private key)
+                    crypto.subtle.sign(
+                        {
+                            name: "ECDSA",
+                            hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+                        },
+                        privateKey, //from generateKey or importKey above
+                        str2ab(btoa(formData)) //ArrayBuffer of data you want to sign
+                    ).then(function(signature){
+                        //returns an ArrayBuffer containing the signature
+                        console.log(new Uint8Array(signature));
+
+                        xhr.open("POST", "/upload/" + channelName + "?sign=" + ab2str(signature), true);
+                        xhr.send(formData);
+                    }).catch(function(err){
+                        console.error(err);
+                    });
+                }).catch(function(err){
+                    console.error(err);
+                });
                 if (postIndex == 1) {
                     // post first block, then enable watch
                     watchDiv.innerHTML = '<a target="_blank" href="/watch/' + channelName + '">watch streaming</a>&nbsp;';
@@ -153,5 +187,19 @@
             localStream = null;
         }
     }
+
+    function ab2str(buf) { // arrayBuffer to string
+        return String.fromCharCode.apply(null, new Uint16Array(buf));
+    }
+
+    function str2ab(str) { // string to array buffer
+        var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+        var bufView = new Uint16Array(buf);
+        for (var i=0, strLen=str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        return buf;
+    }
+
 </script>
 </html>
