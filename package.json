@@ -8,7 +8,7 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/onbeveiligde-devs/API.git"
+    "url": "https://github.com/onbeveiligde-devs/Backend-Server.git"
   },
   "directories": {
     "test": "test",
