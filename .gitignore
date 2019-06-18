@@ -1,7 +1,9 @@
-mov/
+mov/*
+!mov/rd.txt
 stock/
 node_modules/
 .settings/
+.vscode/
 
 # Created by https://www.gitignore.io/api/node,webstorm
 # Edit at https://www.gitignore.io/?templates=node,webstorm
