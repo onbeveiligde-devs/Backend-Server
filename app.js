@@ -30,7 +30,6 @@ const chatRoutes = require('./src/routes/chat.routes');
 const logRoutes = require('./src/routes/log.routes');
 
 streamRoutes(app);
-
 logRoutes(app);
 chatRoutes(app);
 userRoutes(app);
