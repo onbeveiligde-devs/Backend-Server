@@ -6,7 +6,7 @@ const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
 const mongoose = require('mongoose');
 const User = require('../models/db/User');
-const WebCrypto = require("node-webcrypto-ossl");
+const WebCrypto = require("@trust/webcrypto");
 const bodyParser = require('body-parser');
 
 class ChannelStatus {
