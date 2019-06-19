@@ -5,7 +5,7 @@ const fs = require('fs');
 const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
 const mongoose = require('mongoose');
-const User = require('./src/models/db/User');
+const User = require('../models/db/User');
 const WebCrypto = require("node-webcrypto-ossl");
 const bodyParser = require('body-parser');
 
