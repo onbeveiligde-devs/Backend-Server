@@ -24,13 +24,11 @@ app.use(cross()); // Allow Cross Domain Requests
 // endpoints
 const defaultRoutes = require('./src/routes/default.routes');
 const userRoutes = require('./src/routes/user.routes');
-const authRoutes = require('./src/routes/auth.routes');
 const chatRoutes = require('./src/routes/chat.routes');
 const logRoutes = require('./src/routes/log.routes');
 
 logRoutes(app);
 chatRoutes(app);
-authRoutes(app);
 userRoutes(app);
 defaultRoutes(app);
 
