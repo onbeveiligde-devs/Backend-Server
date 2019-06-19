@@ -116,6 +116,9 @@ function str2ab(str) { // string to array buffer
 
 
 module.exports = {
+    online: (req, res)=> {
+        res.send(JSON.stringify(channels));
+    },
     index: (req, res) => {
         console.log('get /');
         res.render('index', {
@@ -204,6 +207,7 @@ module.exports = {
             return;
         }
     
+        channel.isOnAir = true;
         const signature = req.query["sign"];
     
         console.log("Signature is " + signature);

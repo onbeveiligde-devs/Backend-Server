@@ -6,4 +6,5 @@ module.exports = (app) => {
     app.get('/stream/:channel', controller.stream);
     app.get('/golive/:channel', controller.goLife);
     app.post('/upload/:channel', controller.upload);
+    app.get('/online', controller.online)
 };
