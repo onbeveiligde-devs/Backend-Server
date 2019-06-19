@@ -81,10 +81,5 @@ module.exports = {
                     errors: err
                 }, req.url));
             });
-    },
-
-    sign: function(req, res) {
-        console.log('try to sign user. ', req.params);
-        auth.sign();
     }
 };

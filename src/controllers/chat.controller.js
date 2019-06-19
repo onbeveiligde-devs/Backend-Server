@@ -1,5 +1,6 @@
 const Chat = require('../models/db/Chat');
 const Hal = require('hal');
+const auth = require('../models/auth');
 
 module.exports = {
     list: function (req, res) {
@@ -33,29 +34,37 @@ module.exports = {
     create: function (req, res) {
         console.log('try to add a chat message. ', req.body);
 
-        const chat = new Chat(req.body);
-        chat.save()
-            .then((reply) => {
-                let resource = new Hal.Resource({
-                    created: !chat.isNew,
-                    data: reply._doc
-                }, req.url);
+        if (auth.verify(req.body, new Object)) {
+            const chat = new Chat(req.body);
+            chat.save()
+                .then((reply) => {
+                    let resource = new Hal.Resource({
+                        created: !chat.isNew,
+                        data: reply._doc
+                    }, req.url);
 
-                let str = req.url;
-                if (str.substr(-1) != '/') str += '/';
-                str += chat._id;
-                resource.link(chat._id, str);
+                    let str = req.url;
+                    if (str.substr(-1) != '/') str += '/';
+                    str += chat._id;
+                    resource.link(chat._id, str);
 
-                res.send(resource);
-            })
-            .catch(err => {
-                console.log('can not create chat. ', err);
-                res.status(200);
-                res.send(new Hal.Resource({
-                    message: 'can not create chat.',
-                    errors: err
-                }, req.url));
-            });
+                    res.send(resource);
+                })
+                .catch(err => {
+                    console.log('can not create chat. ', err);
+                    res.status(200);
+                    res.send(new Hal.Resource({
+                        message: 'can not create chat.',
+                        errors: err
+                    }, req.url));
+                });
+        } else {
+            console.log('can not verify chat. ');
+            res.status(200);
+            res.send(new Hal.Resource({
+                message: 'can not verify chat.',
+            }, req.url));
+        }
     },
 
     get: function (req, res) {
