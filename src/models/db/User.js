@@ -7,11 +7,15 @@ const UserSchema = new Schema({
 
     certificate: {
         type: String,
-        required: [true, 'Certificate is required.'],
         validate: {
             validator: (s) => s.length > 1024,
             message: 'Certificate must be longer than 1024 characters.'
         }
+    },
+
+    publicKey: {
+        type: Object,
+        default: {}
     },
 
     name: {

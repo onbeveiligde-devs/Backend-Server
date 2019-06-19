@@ -1,83 +1,79 @@
-const User = require('../models/db/User');
+const Money = require('../models/db/Money');
 const Hal = require('hal');
-const Log = require('../models/Log');
-const auth = require('../models/auth');
 
 module.exports = {
     list: function (req, res) {
-        console.log('try to get a list of users. ');
+        console.log('try to get a list of moneys. ');
 
-        User.find()
-            .then(users => {
+        Money.find()
+            .then(moneys => {
                 let resource = new Hal.Resource({
-                    "users": users
+                    "moneys": moneys
                 }, req.url);
 
-                users.forEach(user => {
+                moneys.forEach(money => {
                     let str = req.url;
                     if (str.substr(-1) != '/') str += '/';
-                    str += user._id;
-                    resource.link(user._id, str);
+                    str += money._id;
+                    resource.link(money._id, str);
                 });
 
                 res.send(resource);
             })
             .catch(err => {
-                console.log('can not get a list of users. ', err);
+                console.log('can not get a list of moneys. ', err);
                 res.status(200);
                 res.send(new Hal.Resource({
-                    message: 'can not get a list of users.',
+                    message: 'can not get a list of moneys.',
                     errors: err
                 }, req.url));
             });
     },
 
     create: function (req, res) {
-        console.log('try to create a user. ', req.body);
+        console.log('try to create a money. ', req.body);
 
-        const user = new User(req.body);
-        user.save()
+        const money = new Money(req.body);
+        money.save()
             .then((reply) => {
                 let resource = new Hal.Resource({
-                    created: !user.isNew,
+                    created: !money.isNew,
                     data: reply._doc
                 }, req.url);
 
                 let str = req.url;
                 if (str.substr(-1) != '/') str += '/';
-                str += user._id;
-                resource.link(user._id, str);
+                str += money._id;
+                resource.link(money._id, str);
 
                 res.send(resource);
-
-                Log.save(req.body.certificate, "IS CREATED", req.body.nameHash)
             })
             .catch(err => {
-                console.log('can not create user. ', err);
+                console.log('can not create money. ', err);
                 res.status(200);
                 res.send(new Hal.Resource({
-                    message: 'can not create user.',
+                    message: 'can not create money.',
                     errors: err
                 }, req.url));
             });
     },
 
     get: function (req, res) {
-        console.log('try to get user. ', req.params);
+        console.log('try to get money. ', req.params);
 
-        User.findOne({
+        Money.findOne({
                 _id: req.params.id
             })
             .then(reply => {
                 res.send(new Hal.Resource({
-                    User: reply._doc
+                    Money: reply._doc
                 }, req.url));
             })
             .catch(err => {
-                console.log('can not get user. ', err);
+                console.log('can not get money. ', err);
                 res.status(200);
                 res.send(new Hal.Resource({
-                    message: 'can not get user.',
+                    message: 'can not get money.',
                     errors: err
                 }, req.url));
             });
