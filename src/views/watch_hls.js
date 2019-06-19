@@ -14,10 +14,11 @@ function bindVideo() {
                 console.log("Manifest loaded, found " + data.levels.length + " quality level");
             });
         });
-
-        video.play();
-
     } else {
         console.log("ERROR: Could not bind video and hls.js!")
     }
+}
+
+function playVideo() {
+    video.play();
 }
