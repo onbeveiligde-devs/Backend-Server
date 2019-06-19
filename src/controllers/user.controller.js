@@ -83,6 +83,21 @@ module.exports = {
     },
 
     login: function(req, res) {
-        console.log('sign = ' + req.body.sign);
+        let sign = req.body.sign;
+        let publicKey = req.body.publicKey;
+        let secret = req.body.secret;
+
+        crypto.verify(secret, sign, publicKey)
+            .then(success => {
+                res.status(200).json(new Hal.Resource({
+                    success: success
+                }))
+            })
+            .catch(error => {
+                res.status(500).json(new Hal.Resource({
+                    success: false,
+                    error: error
+                }))
+            });
     }
 };

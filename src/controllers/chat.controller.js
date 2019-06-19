@@ -1,6 +1,6 @@
 const Chat = require('../models/db/Chat');
 const Hal = require('hal');
-const auth = require('../models/auth');
+const crypto = require('./crypto');
 
 module.exports = {
     list: function (req, res) {
@@ -34,7 +34,7 @@ module.exports = {
     create: function (req, res) {
         console.log('try to add a chat message. ', req.body);
 
-        if (auth.verify(req.body, new Object)) {
+        if (crypto.verify(req.body, new Object)) {
             const chat = new Chat(req.body);
             chat.save()
                 .then((reply) => {
