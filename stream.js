@@ -1,18 +1,24 @@
-var multiparty = require('multiparty')
-var express = require('express');
-var path = require('path');
-var fs = require('fs');
-var uuid = require('node-uuid');
+const multiparty = require('multiparty');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const uuid = require('node-uuid');
+require('dotenv').config({path: '.env'});
+const mongoose = require('mongoose');
+const User = require('./src/models/db/User');
+const WebCrypto = require("node-webcrypto-ossl");
+const bodyParser = require('body-parser');
 
 const port = process.env.PORT || 8000;
-var serverURL = 'localhost:' + port;
+const serverURL = 'localhost:' + port;
 
-const https = require('https');
+// make mongoose use ES6 promises
+mongoose.Promise = global.Promise;
 
-const httpOptions = {
-    key: fs.readFileSync("data/keys/privatekey.pem"),
-    cert: fs.readFileSync("data/keys/certificate.pem")
-};
+// connect to mongodb
+mongoose.connect(process.env.DB, {
+    useNewUrlParser: true
+});
 
 class ChannelStatus {
     constructor() {
@@ -52,7 +58,7 @@ function startChannel(name) {
 
     channelStatus.name = name;
     channelStatus.uuid = uuid.v1();
-    channelStatus.dir = path.join(__dirname, 'data/mov', 'd_' + name + '_' + channelStatus.uuid);
+    channelStatus.dir = path.join(__dirname, 'src/data/mov', 'd_' + name + '_' + channelStatus.uuid);
     channelStatus.filePrefix = path.join(channelStatus.dir, 'v_' + channelStatus.name);
     channels[name] = channelStatus;
 
@@ -73,8 +79,12 @@ function getChannelStatus(name) {
 
 var app = express();
 app.set('view engine', 'ejs');
-app.set('views', __dirname + '/views');
-app.use(express.static(__dirname + '/public'));
+app.set('views', __dirname + '/src/views');
+app.use(express.static(__dirname + '/src/public'));
+
+app.use(bodyParser.json({ // tell app to use json body parser
+    extended: true
+}));
 
 app.get('/', function (req, res) {
     console.log('get /');
@@ -185,6 +195,53 @@ app.post('/upload/:channel', function (req, res) {
         return;
     }
 
+    const signature = req.query["sign"];
+
+    console.log("SIgnature is " + signature);
+    console.log("Channelname is " + channel);
+
+    User.findOne({name: channel})
+        .then((user) => {
+            const webcrypto = new WebCrypto();
+
+            webcrypto.subtle.importKey(
+                "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                user["publicKey"],
+                {   //these are the algorithm options
+                    name: "ECDSA",
+                    namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
+                },
+                true, //whether the key is extractable (i.e. can be used in exportKey)
+                ["verify"] //"verify" for public key import, "sign" for private key imports
+            ).then(function(publicKey){
+                //returns a publicKey (or privateKey if you are importing a private key)
+                console.log("MIJN PUBLICKE IS ");
+                console.log(publicKey);
+
+                console.log('type(signature)');
+                console.log(typeof signature);
+                console.log(req.body);
+                console.log(btoa(req.body));
+                console.log(str2ab(btoa(req.body)));
+
+                return webcrypto.subtle.verify(
+                    {
+                        name: "ECDSA",
+                        hash: {name: "SHA-256"},
+                    },
+                    publicKey,
+                    signature,
+                    str2ab(btoa(req.body))
+                    );
+            }).then((result) => {
+                console.log( "De result is");
+                console.log(result);
+            }).catch(err => {
+                console.log(err);
+            });
+
+        });
+
     var form = new multiparty.Form({
         maxFieldsSize: 4096 * 1024
     });
@@ -200,6 +257,9 @@ app.post('/upload/:channel', function (req, res) {
             return;
         }
 
+        console.log("fields");
+        console.log(fields);
+
         var postIndex = fields.blob_index[0];
         var postSec = fields.blob_sec[0];
         var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
@@ -208,15 +268,6 @@ app.post('/upload/:channel', function (req, res) {
         channelStatus.currentSeq = postIndex;
         channelStatus.currentSec = postSec;
         channelStatus.storedSec = postSec;
-
-        // delete old cluster
-        //  if (postSec >= 10) {
-        //   var removeSec = postSec - clusterIntervalSec*2;
-        //   var removeFilename =  channelStatus.filePrefix + '_'  + removeSec + '.webm';
-        //   fs.unlink(removeFilename, function() {
-        //    console.log('-- remove old cluster: ' + removeFilename);
-        //   });
-        //  }
 
         res.writeHead(200, {
             'content-type': 'text/plain'
@@ -236,4 +287,13 @@ function writeWebM(filename, buf, endPosition) {
     var bufToWrite = buf.slice(0, endPosition);
     writeStream.write(bufToWrite);
     writeStream.end();
+}
+
+function str2ab(str) { // string to array buffer
+    var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+    var bufView = new Uint16Array(buf);
+    for (var i=0, strLen=str.length; i < strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
 }

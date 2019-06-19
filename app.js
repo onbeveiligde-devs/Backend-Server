@@ -46,4 +46,3 @@ module.exports = {
     app: app,
     server: server
 }
-
