@@ -5,17 +5,10 @@ const {
 
 const UserSchema = new Schema({
 
-    certificate: {
-        type: String,
-        validate: {
-            validator: (s) => s.length > 1024,
-            message: 'Certificate must be longer than 1024 characters.'
-        }
-    },
-
     publicKey: {
         type: Object,
-        default: {}
+        required: true,
+        unique: true
     },
 
     name: {
@@ -23,15 +16,8 @@ const UserSchema = new Schema({
         validate: {
             validator: (s) => s.length > 2,
             message: 'The name must be longer than 2 characters.'
-        }
-    },
-
-    nameHash: {
-        type: String,
-        validate: {
-            validator: (s) => s.length > 8,
-            message: 'The hash must be longer than 8 characters.'
-        }
+        },
+        unique: true
     },
 
     balance: {

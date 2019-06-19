@@ -1,7 +1,7 @@
 const User = require('../models/db/User');
 const Hal = require('hal');
 const Log = require('../models/Log');
-const auth = require('../models/auth');
+const crypto = require('./crypto');
 
 module.exports = {
     list: function (req, res) {
@@ -33,9 +33,12 @@ module.exports = {
     },
 
     create: function (req, res) {
-        console.log('try to create a user. ', req.body);
+        console.log('try to create a user', req.body);
 
-        const user = new User(req.body);
+        const user = new User({
+            publicKey: req.body.publicKey,
+            name: req.body.name
+        });
         user.save()
             .then((reply) => {
                 let resource = new Hal.Resource({
@@ -49,8 +52,6 @@ module.exports = {
                 resource.link(user._id, str);
 
                 res.send(resource);
-
-                Log.save(req.body.certificate, "IS CREATED", req.body.nameHash)
             })
             .catch(err => {
                 console.log('can not create user. ', err);
@@ -65,9 +66,7 @@ module.exports = {
     get: function (req, res) {
         console.log('try to get user. ', req.params);
 
-        User.findOne({
-                _id: req.params.id
-            })
+        User.findById(req.params.id)
             .then(reply => {
                 res.send(new Hal.Resource({
                     User: reply._doc
@@ -81,5 +80,9 @@ module.exports = {
                     errors: err
                 }, req.url));
             });
+    },
+
+    login: function(req, res) {
+        console.log('sign = ' + req.body.sign);
     }
 };
