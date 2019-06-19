@@ -1,5 +1,5 @@
 const socketio = require('socket.io');
-const User = require('../models/db/User');
+const Chat = require('../models/db/Chat');
 const auth = require('../models/auth');
 
 module.exports = {
@@ -24,11 +24,11 @@ module.exports = {
         socket.on('MSGTOSERV', function (data) { // received from client
             console.log('try to save message from ' + socket.handshake.address);
             if (typeof (data.message) !== 'undefined' &&
-                typeof (data.key) !== 'undefined' &&
-                auth.verify(data.message, data.key)
+                typeof (data.certificateAuthor) !== 'undefined' &&
+                auth.verify(data.message, data.certificateAuthor)
             ) {
-                const user = new User(data);
-                user.save()
+                const chat = new Chat(data);
+                chat.save()
                     .then((reply) => {
                         console.log('message saved from ' + socket.handshake.address + '. Try to load it...');
                         io.emit('MSGTOCLIENT', reply); // send to client
