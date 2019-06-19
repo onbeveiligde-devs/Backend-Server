@@ -17,11 +17,11 @@ module.exports = {
             WebCrypto.subtle.verify(
                 {
                     name: "RSASSA-PKCS1-v1_5",
-                    hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+                    hash: {name: "SHA-256"},
                 },
-                pub, //from generateKey or importKey above
-                Base64ArrayBufferUtil.decode(sign), //ArrayBuffer of the signature
-                this.str2ab(data) //ArrayBuffer of the data
+                pub,
+                Base64ArrayBufferUtil.decode(sign),
+                this.str2ab(data)
             )
                 .then(succ => {
                     console.log(succ);
@@ -40,11 +40,11 @@ module.exports = {
             WebCrypto.subtle.importKey(
                 'jwk',
                 JSON.parse(key),
-                {   //these are the algorithm options
+                {
                     name: "RSASSA-PKCS1-v1_5",
-                    hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+                    hash: {name: "SHA-256"},
                 },
-                true, //whether the key is extractable (i.e. can be used in exportKey)
+                true,
                 [(isPrivate ? "sign" : "verify")])
                 .then(unwrappedKey => res(unwrappedKey))
                 .catch(err => rej(err));
@@ -77,9 +77,9 @@ module.exports = {
     },
 
     str2ab: function(str) {
-        var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-        var bufView = new Uint16Array(buf);
-        for (var i = 0, strLen = str.length; i < strLen; i++) {
+        let buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
+        let bufView = new Uint16Array(buf);
+        for (i = 0, strLen = str.length; i < strLen; i++) {
             bufView[i] = str.charCodeAt(i);
         }
         return buf;

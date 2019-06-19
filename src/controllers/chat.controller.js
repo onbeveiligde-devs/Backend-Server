@@ -1,12 +1,11 @@
 const Chat = require('../models/db/Chat');
+const User = require('../models/db/User');
 const Hal = require('hal');
 const crypto = require('./crypto');
 
 module.exports = {
-    list: function (req, res) {
-        console.log('try to get a list of messages. ');
-
-        Chat.find()
+    allByUserId: function (req, res) {
+        Chat.find({ user: req.params.user })
             .then(messages => {
                 let resource = new Hal.Resource({
                     "messages": messages
@@ -32,57 +31,48 @@ module.exports = {
     },
 
     create: function (req, res) {
-        console.log('try to add a chat message. ', req.body);
 
-        if (crypto.verify(req.body, new Object)) {
-            const chat = new Chat(req.body);
-            chat.save()
-                .then((reply) => {
-                    let resource = new Hal.Resource({
-                        created: !chat.isNew,
-                        data: reply._doc
-                    }, req.url);
-
-                    let str = req.url;
-                    if (str.substr(-1) != '/') str += '/';
-                    str += chat._id;
-                    resource.link(chat._id, str);
-
-                    res.send(resource);
-                })
-                .catch(err => {
-                    console.log('can not create chat. ', err);
-                    res.status(200);
-                    res.send(new Hal.Resource({
+        User.findById(req.body.user)
+            .then(user => {
+                if(!user) {
+                    res.status(404).send(new Hal.Resource({
                         message: 'can not create chat.',
                         errors: err
                     }, req.url));
-                });
-        } else {
-            console.log('can not verify chat. ');
-            res.status(200);
-            res.send(new Hal.Resource({
-                message: 'can not verify chat.',
-            }, req.url));
-        }
-    },
+                }
 
-    get: function (req, res) {
-        console.log('try to get chat. ', req.params);
+                //TODO: hier was ik
 
-        Chat.findOne({
-                _id: req.params.id
-            })
-            .then(reply => {
-                res.send(new Hal.Resource({
-                    Chat: reply._doc
-                }, req.url));
+                User.findById(req.body.)
+
             })
             .catch(err => {
-                console.log('can not get chat. ', err);
+                res.status(500).send(new Hal.Resource({
+                    message: 'can not create chat.',
+                    errors: err
+                }, req.url));
+            });
+
+        const chat = new Chat(req.body);
+        chat.save()
+            .then((reply) => {
+                let resource = new Hal.Resource({
+                    created: !chat.isNew,
+                    data: reply._doc
+                }, req.url);
+
+                let str = req.url;
+                if (str.substr(-1) != '/') str += '/';
+                str += chat._id;
+                resource.link(chat._id, str);
+
+                res.send(resource);
+            })
+            .catch(err => {
+                console.log('can not create chat. ', err);
                 res.status(200);
                 res.send(new Hal.Resource({
-                    message: 'can not get chat.',
+                    message: 'can not create chat.',
                     errors: err
                 }, req.url));
             });

@@ -6,7 +6,7 @@ const {
 const UserSchema = new Schema({
 
     publicKey: {
-        type: Object,
+        type: String,
         required: true,
         unique: true
     },

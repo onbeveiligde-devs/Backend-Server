@@ -1,7 +1,6 @@
 const controller = require('../controllers/chat.controller');
 
 module.exports = (app) => {
-    app.get('/chat', controller.list);
-    app.get('/chat/:id', controller.get);
+    app.get('/chat/:user', controller.allByUserId);
     app.post('/chat', controller.create);
 };
