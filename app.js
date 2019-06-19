@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cross = require('cors');
 const mongoose = require('mongoose');
+const path = require("path");
 
 // make mongoose use ES6 promises
 mongoose.Promise = global.Promise;
@@ -23,6 +24,7 @@ app.use(cross()); // Allow Cross Domain Requests
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/src/views');
+app.use(express.static(path.join(__dirname, 'src/public')));
 
 // endpoints
 const streamRoutes = require('./src/routes/stream.routes');

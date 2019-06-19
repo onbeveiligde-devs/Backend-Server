@@ -5,8 +5,10 @@ const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
 const mongoose = require('mongoose');
 const User = require('../models/db/User');
-const WebCrypto = require("@trust/webcrypto");
+const crypto = require("@trust/webcrypto");
 const bodyParser = require('body-parser');
+const btoa = require("btoa");
+const atob = require("atob");
 
 class ChannelStatus {
     constructor() {
@@ -39,16 +41,6 @@ var channels = {}; // channel status has
 const port = process.env.PORT || 8000;
 const serverURL = 'localhost:' + port;
 
-// make mongoose use ES6 promises
-mongoose.Promise = global.Promise;
-
-// connect to mongodb
-mongoose.connect(process.env.DB, {
-    useNewUrlParser: true
-});
-
-
-
 function startChannel(name) {
     var channelStatus = channels[name];
     if (!channelStatus) {
@@ -59,7 +51,7 @@ function startChannel(name) {
 
     channelStatus.name = name;
     channelStatus.uuid = uuid.v1();
-    channelStatus.dir = path.join(__dirname, 'src/data/mov', 'd_' + name + '_' + channelStatus.uuid);
+    channelStatus.dir = path.join(__dirname, '../data/mov', 'd_' + name + '_' + channelStatus.uuid);
     channelStatus.filePrefix = path.join(channelStatus.dir, 'v_' + channelStatus.name);
     channels[name] = channelStatus;
 
@@ -154,22 +146,22 @@ module.exports = {
             res.end('not found');
             return;
         }
-    
+
         res.writeHead(200, {
             'Content-Type': 'video/webm',
             'Cache-Control': 'no-cache, no-store'
         });
-    
-    
+
+
         var filename = channelStatus.filePrefix + '_' + 0 + '.webm';
         var watcher = {
             response: res,
             ready: false
         };
-    
+
         console.log("Streaming header")
         streamFile(res, filename, channelStatus.watchers[channelStatus.watchers.push(watcher) - 1]);
-    
+
         res.on('close', function () {
             console.log('Close'); // close event fired, when browser window closes
             channelStatus.watchers.splice(channelStatus.watchers.indexOf(watcher), 1);
@@ -178,7 +170,7 @@ module.exports = {
             console.log('End');
             channelStatus.watchers.splice(channelStatus.watchers.indexOf(watcher), 1);
         });
-    
+
         return;
     },
     goLife: (req, res) => {
@@ -187,7 +179,7 @@ module.exports = {
         if (!channelStatus) {
             console.error('ERROR. channel:' + channel + ' already onAir');
         }
-    
+
         res.render('golive', {
             title: 'GoLive ' + channel,
             channel: channel
@@ -203,54 +195,15 @@ module.exports = {
             res.end('Server Error');
             return;
         }
-    
+
+        console.log("HIERBIJ DE REQUEST BODY");
+        console.log(req.body["blob_name"]);
+
         const signature = req.query["sign"];
-    
+
         console.log("Signature is " + signature);
         console.log("Channelname is " + channel);
-    
-        User.findOne({name: channel})
-            .then((user) => {
-                const webcrypto = new WebCrypto();
-    
-                webcrypto.subtle.importKey(
-                    "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
-                    user["publicKey"],
-                    {   //these are the algorithm options
-                        name: "ECDSA",
-                        namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-                    },
-                    true, //whether the key is extractable (i.e. can be used in exportKey)
-                    ["verify"] //"verify" for public key import, "sign" for private key imports
-                ).then(function(publicKey){
-                    //returns a publicKey (or privateKey if you are importing a private key)
-                    console.log("MIJN PUBLICKE IS ");
-                    console.log(publicKey);
-    
-                    console.log('type(signature)');
-                    console.log(typeof signature);
-                    console.log(req.body);
-                    console.log(btoa(req.body));
-                    console.log(str2ab(btoa(req.body)));
-    
-                    return webcrypto.subtle.verify(
-                        {
-                            name: "ECDSA",
-                            hash: {name: "SHA-256"},
-                        },
-                        publicKey,
-                        signature,
-                        str2ab(btoa(req.body))
-                        );
-                }).then((result) => {
-                    console.log( "De result is");
-                    console.log(result);
-                }).catch(err => {
-                    console.log(err);
-                });
-    
-            });
-    
+
         var form = new multiparty.Form({
             maxFieldsSize: 4096 * 1024
         });
@@ -258,17 +211,65 @@ module.exports = {
             if (err) {
                 console.error('form parse error');
                 console.error(err);
-    
+
                 res.writeHead(500, {
                     'content-type': 'text/plain'
                 });
                 res.end('Server Error');
                 return;
             }
-    
-            console.log("fields");
-            console.log(fields);
-    
+
+            console.log("fields.keys()");
+            console.log(Object.keys(fields));
+
+            const signedData = {
+                base64: fields["blob_base64"],
+                index: fields["blob_index"],
+                name: fields["blob_name"],
+                second: fields["blob_sec"]
+            };
+
+            console.log("SignedData");
+            console.log(signedData);
+            console.log(JSON.stringify(signedData));
+
+            User.findOne({name: channel})
+                .then((user) => {
+                    console.log("USER");
+                    console.log(user);
+                    crypto.subtle.importKey(
+                        "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                        user["publicKey"],
+                        {   //these are the algorithm options
+                            name: "ECDSA",
+                            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
+                        },
+                        true, //whether the key is extractable (i.e. can be used in exportKey)
+                        ["verify"] //"verify" for public key import, "sign" for private key imports
+                    ).then(function(publicKey){
+                        //returns a publicKey (or privateKey if you are importing a private key)
+
+                        return crypto.subtle.verify(
+                            {
+                                name: "ECDSA",
+                                hash: {name: "SHA-256"},
+                            },
+                            publicKey,
+                            signature,
+                            str2ab(btoa(JSON.stringify(signedData)))
+                        );
+                    }).then((result) => {
+                        console.log( "De result is");
+                        console.log(result);
+                    }).catch(err => {
+                        console.log(err);
+                    });
+
+                });
+
+            // console.log("fields");
+            // console.log(fields);
+
             var postIndex = fields.blob_index[0];
             var postSec = fields.blob_sec[0];
             var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
@@ -277,13 +278,13 @@ module.exports = {
             channelStatus.currentSeq = postIndex;
             channelStatus.currentSec = postSec;
             channelStatus.storedSec = postSec;
-    
+
             res.writeHead(200, {
                 'content-type': 'text/plain'
             });
             res.write('received upload:\n\n');
             res.end('upload index=' + postIndex + ' , sec=' + postSec);
-    
+
         });
     }
 }

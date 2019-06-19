@@ -2,6 +2,9 @@ function sign(data) {
 
     const exportedPrivateKey = JSON.parse(localStorage.getItem("exportedPrivateKey"));
 
+    console.log("exportedPrivateKey");
+    console.log(exportedPrivateKey);
+
     return crypto.subtle.importKey(
         "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
         exportedPrivateKey,
@@ -19,7 +22,7 @@ function sign(data) {
                 hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
             },
             privateKey, //from generateKey or importKey above
-            str2ab(btoa(data)) //ArrayBuffer of data you want to sign
+            str2ab(btoa(JSON.stringify(data))) //ArrayBuffer of data you want to sign
         )
     });
 }

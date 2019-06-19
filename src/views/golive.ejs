@@ -82,13 +82,27 @@
                 formData.append("blob_sec", postSec);
                 var xhr = new XMLHttpRequest();
 
+                console.log("formData");
+                console.log(formData);
+
                 xhr.onreadystatechange = function () {
                     if ((xhr.readyState == 4) && (xhr.status == 200)) {
                         console.log("xhr finish. response= " + xhr.responseText);
                     }
                 }
 
-                sign(formData).then(function(signature){
+                const dataToSign = {
+                    base64: base64,
+                    index: formData.get("blob_index"),
+                    name: formData.get("blob_name"),
+                    second: formData.get("blob_sec")
+                };
+
+                console.log("SignedData");
+                console.log(dataToSign)
+                console.log(JSON.stringify(dataToSign))
+
+                sign(dataToSign).then(function(signature){
                     //returns an ArrayBuffer containing the signature
                     console.log(new Uint8Array(signature));
 
