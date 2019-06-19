@@ -1,7 +1,7 @@
 module.exports = {
     /**
      * verify signature
-     * @param {*} data unencripted data or command
+     * @param {*} data unencrypted data or command
      * @param {string} public key or certificate 
      * @returns {boolean} valid signature
      */
