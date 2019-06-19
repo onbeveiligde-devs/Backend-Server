@@ -8,9 +8,10 @@ module.exports = {
         }, req.url);
 
         let array = [
-            'auth',
+            'chat',
             'user',
-            'chat'
+            'log',
+            'stream'
         ];
         array.forEach(element => {
             resource.link(element, '/' + element);
