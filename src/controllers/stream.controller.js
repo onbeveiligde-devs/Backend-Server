@@ -1,5 +1,4 @@
 const multiparty = require('multiparty');
-const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const uuid = require('node-uuid');
@@ -207,7 +206,7 @@ module.exports = {
     
         const signature = req.query["sign"];
     
-        console.log("SIgnature is " + signature);
+        console.log("Signature is " + signature);
         console.log("Channelname is " + channel);
     
         User.findOne({name: channel})
