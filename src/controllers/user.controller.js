@@ -35,6 +35,8 @@ module.exports = {
     create: function (req, res) {
         console.log('try to create a user', req.body);
 
+
+
         const user = new User({
             publicKey: req.body.publicKey,
             name: req.body.name
@@ -85,11 +87,11 @@ module.exports = {
     login: function(req, res) {
         let sign = req.body.sign;
         let publicKey = req.body.publicKey;
-        let secret = req.body.secret;
+        let command = req.body.command;
 
-        crypto.verify(secret, sign, publicKey)
+        crypto.verify(command, sign, publicKey)
             .then(success => {
-                res.status(200).json(new Hal.Resource({
+                res.status(success ? 200 : 400).json(new Hal.Resource({
                     success: success
                 }))
             })
