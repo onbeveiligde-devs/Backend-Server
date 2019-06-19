@@ -32,7 +32,7 @@ const ChatSchema = new Schema({
 
     messageHash: {
         type: String,
-        required: [true, 'The encripted hash is required.'],
+        required: [true, 'The encrypted hash is required.'],
         validate: {
             validator: (s) => s.length > 1,
             message: 'Certificate must be longer than 1024 characters.'
