@@ -21,6 +21,9 @@ app.use(bodyParser.json({ // tell app to use json body parser
 // app.use(cookieParser());
 app.use(cross()); // Allow Cross Domain Requests
 
+app.set('view engine', 'ejs');
+app.set('views', __dirname + '/src/views');
+
 // endpoints
 const defaultRoutes = require('./src/routes/default.routes');
 const userRoutes = require('./src/routes/user.routes');
