@@ -22,18 +22,19 @@ app.use(bodyParser.json({ // tell app to use json body parser
 app.use(cross()); // Allow Cross Domain Requests
 
 // endpoints
+const streamRoutes = require('./src/routes/stream.routes');
+
 const defaultRoutes = require('./src/routes/default.routes');
 const userRoutes = require('./src/routes/user.routes');
 const chatRoutes = require('./src/routes/chat.routes');
 const logRoutes = require('./src/routes/log.routes');
-const streamRoutes = require('./src/routes/stream.routes');
 
+streamRoutes(app);
 
 logRoutes(app);
 chatRoutes(app);
 userRoutes(app);
 defaultRoutes(app);
-streamRoutes(app);
 
 // server
 const port = process.env.PORT | 3000;
@@ -48,4 +49,4 @@ sockets.start(server);
 module.exports = {
     app: app,
     server: server
-}
+};
