@@ -12,16 +12,8 @@ module.exports = {
 
     /**
      * sign public key or certificate
-     * @param {*} certificate 
-     * @returns {*} signed certificate
-     */
-    sign(certificate) {
-        return certificate
-    },
-
-    /**
-     * sign key
      * @param {*} exportedPrivateKey 
+     * @returns {*} signed key
      */
     sign(exportedPrivateKey) {
         return crypto.subtle.importKey(
