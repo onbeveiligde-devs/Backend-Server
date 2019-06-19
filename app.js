@@ -25,11 +25,12 @@ app.set('view engine', 'ejs');
 app.set('views', __dirname + '/src/views');
 
 // endpoints
+const streamRoutes = require('./src/routes/stream.routes');
+
 const defaultRoutes = require('./src/routes/default.routes');
 const userRoutes = require('./src/routes/user.routes');
 const chatRoutes = require('./src/routes/chat.routes');
 const logRoutes = require('./src/routes/log.routes');
-const streamRoutes = require('./src/routes/stream.routes');
 
 streamRoutes(app);
 logRoutes(app);
@@ -50,4 +51,4 @@ sockets.start(server);
 module.exports = {
     app: app,
     server: server
-}
+};
