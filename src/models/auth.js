@@ -1,18 +1,21 @@
-const openssl = require('openssl-wrapper');
-
 module.exports = {
-    hash(data, private, done) {
-        let hash = '';
-        done((hash));
+    /**
+     * verify signature
+     * @param {*} data unencripted data or command
+     * @param {string} public key or certificate 
+     * @returns {boolean} valid signature
+     */
+    verify(data, key) {
+        console.log(key, data);
+        return true;
     },
 
-    example() {
-        return openssl('genrsa', {
-            des3: true,
-            passout: `pass:lol`,
-            '2048': false
-        }, function (err, buffer) {
-            console.log(buffer.toString());
-        });
+    /**
+     * sign public key or certificate
+     * @param {*} certificate 
+     * @returns {*} signed certificate
+     */
+    sign(certificate) {
+        return certificate
     }
 }
