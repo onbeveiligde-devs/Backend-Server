@@ -1,8 +1,5 @@
 const socketio = require('socket.io');
-const {
-    save,
-    load
-} = require('../models/msg');
+const User = require('../models/db/User');
 
 module.exports = {
     start: function (app) {
