@@ -9,7 +9,7 @@ const crypto = require("@trust/webcrypto");
 const bodyParser = require('body-parser');
 const btoa = require("btoa");
 const atob = require("atob");
-import { inspect } from 'util'
+const util = require('util');
 
 class ChannelStatus {
     constructor() {
