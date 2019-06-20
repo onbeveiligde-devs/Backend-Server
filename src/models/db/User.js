@@ -11,6 +11,12 @@ const UserSchema = new Schema({
         unique: true
     },
 
+    circleSighn: { // hash of public key and encripted by the cercle (private key of the server)
+        type: String,
+        required: false,
+        unique: false
+    },
+
     name: {
         type: String,
         validate: {
