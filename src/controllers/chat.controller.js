@@ -4,6 +4,32 @@ const Hal = require('hal');
 const crypto = require('./crypto');
 
 module.exports = {
+    list: function (req, res) {
+        Chat.find()
+            .then(messages => {
+                let resource = new Hal.Resource({
+                    "messages": messages
+                }, req.url);
+
+                messages.forEach(chat => {
+                    let str = req.url;
+                    if (str.substr(-1) != '/') str += '/';
+                    str += chat._id;
+                    resource.link(chat.user, str);
+                });
+
+                res.send(resource);
+            })
+            .catch(err => {
+                console.log('can not get a list of messages. ', err);
+                res.status(200);
+                res.send(new Hal.Resource({
+                    message: 'can not get a list of messages.',
+                    errors: err
+                }, req.url));
+            });
+    },
+
     allByUserId: function (req, res) {
         Chat.find({ user: req.params.user })
             .then(messages => {
