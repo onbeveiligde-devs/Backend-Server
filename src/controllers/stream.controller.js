@@ -234,43 +234,50 @@ module.exports = {
                 second: fields["blob_sec"]
             };
 
-            console.log("SignedData");
-            console.log(signedData);
-            console.log(JSON.stringify(signedData));
+            // console.log("SignedData");
+            // console.log(signedData);
+            // console.log(JSON.stringify(signedData));
 
-            User.findOne({name: channel})
-                .then((user) => {
-                    console.log("USER");
-                    console.log(user);
-                    crypto.subtle.importKey(
-                        "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
-                        user["publicKey"],
-                        {   //these are the algorithm options
-                            name: "ECDSA",
-                            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-                        },
-                        true, //whether the key is extractable (i.e. can be used in exportKey)
-                        ["verify"] //"verify" for public key import, "sign" for private key imports
-                    ).then(function(publicKey){
-                        //returns a publicKey (or privateKey if you are importing a private key)
-
-                        return crypto.subtle.verify(
-                            {
-                                name: "ECDSA",
-                                hash: {name: "SHA-256"},
-                            },
-                            publicKey,
-                            signature,
-                            str2ab(btoa(JSON.stringify(signedData)))
-                        );
-                    }).then((result) => {
-                        console.log( "De result is");
-                        console.log(result);
-                    }).catch(err => {
-                        console.log(err);
-                    });
-
-                });
+            // User.findOne({name: channel})
+            //     .then((user) => {
+            //         console.log("USER");
+            //         console.log(user);
+            //         crypto.subtle.importKey(
+            //             "spki", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+            //             user["publicKey"],
+            //             {
+            //                 name: "RSASSA-PKCS1-v1_5",
+            //                 // Consider using a 4096-bit key for systems that require long-term security
+            //                 modulusLength: 2048,
+            //                 publicExponent: new Uint8Array([1, 0, 1]),
+            //                 hash: "SHA-256",
+            //             },
+            //             true, //whether the key is extractable (i.e. can be used in exportKey)
+            //             ["verify"] //"verify" for public key import, "sign" for private key imports
+            //         ).then(function(publicKey){
+            //             //returns a publicKey (or privateKey if you are importing a private key)
+            //
+            //             console.log("DIT IS EEN PUBLIC KEY STUK");
+            //
+            //             return crypto.subtle.verify(
+            //                 {
+            //                     name: "RSASSA-PKCS1-v1_5",
+            //                     hash: {name: "SHA-256"},
+            //                 },
+            //                 publicKey,
+            //                 str2ab(signature),
+            //                 str2ab("Hoi")
+            //             );
+            //             str2ab(btoa(JSON.stringify(signedData)))
+            //
+            //         }).then((result) => {
+            //             console.log( "De result is");
+            //             console.log(result);
+            //         }).catch(err => {
+            //             console.log(err);
+            //         });
+            //
+            //     });
 
             // console.log("fields");
             // console.log(fields);

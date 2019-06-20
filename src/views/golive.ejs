@@ -98,19 +98,15 @@
                     second: formData.get("blob_sec")
                 };
 
-                console.log("SignedData");
-                console.log(dataToSign)
-                console.log(JSON.stringify(dataToSign))
+//                sign(dataToSign).then(function(signature){
+//                    //returns an ArrayBuffer containing the signature
+//                    console.log(new Uint8Array(signature));
 
-                sign(dataToSign).then(function(signature){
-                    //returns an ArrayBuffer containing the signature
-                    console.log(new Uint8Array(signature));
-
-                    xhr.open("POST", "/upload/" + channelName + "?sign=" + ab2str(signature), true);
+                    xhr.open("POST", "/upload/" + channelName /*+ "?sign=" + ab2str(signature) */, true);
                     xhr.send(formData);
-                }).catch(function(err){
-                    console.error(err);
-                });
+//                }).catch(function(err){
+//                    console.error(err);
+//                });
                 if (postIndex == 1) {
                     // post first block, then enable watch
                     watchDiv.innerHTML = '<a target="_blank" href="/watch/' + channelName + '">watch streaming</a>&nbsp;';

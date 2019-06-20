@@ -4,49 +4,40 @@ const {
 } = require('mongoose');
 
 const ChatSchema = new Schema({
-    id: {
+
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        unique: true
+        required: true
     },
 
-    certificateSubject: {
-        type: String,
-        unique: true,
-        required: [true, 'Subject certificate is required.'],
-        validate: {
-            validator: (s) => s.length > 1,
-            message: 'Certificate must be longer than 1024 characters.'
-        }
-    },
-
-    certificateAuthor: {
-        type: String,
-        unique: true,
-        required: [true, 'Author certificate is required.'],
-        validate: {
-            validator: (s) => s.length > 1,
-            message: 'Certificate must be longer than 1024 characters.'
-        }
-    },
-
-    messageHash: {
-        type: String,
-        required: [true, 'The encrypted hash is required.'],
-        validate: {
-            validator: (s) => s.length > 1,
-            message: 'Certificate must be longer than 1024 characters.'
-        }
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
 
     message: {
         type: String,
-        required: [true, 'Message is required,']
+        required: [true, 'Message is required'],
+        validate: {
+            validator: (s) => s.length >= 1,
+            message: 'The message must be between 1 and 1024 characters'
+        }
     },
 
     timestamp: {
         type: Date,
         default: Date.now
+    },
+
+    sign: {
+        type: String,
+        required: [true, 'The encrypted hash with format "message-timestamp" is required'],
+        validate: {
+            validator: (s) => s.length >= 2,
+            message: 'Hash must be 256 characters'
+        }
     }
 });
 
