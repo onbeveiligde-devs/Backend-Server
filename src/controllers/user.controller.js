@@ -32,47 +32,12 @@ module.exports = {
             });
     },
 
-    create: function (req, res) {
-        console.log('try to create a user', req.body);
-
-
-
-        const user = new User({
-            publicKey: req.body.publicKey,
-            name: req.body.name
-        });
-        user.save()
-            .then((reply) => {
-                let resource = new Hal.Resource({
-                    created: !user.isNew,
-                    data: reply._doc
-                }, req.url);
-
-                let str = req.url;
-                if (str.substr(-1) != '/') str += '/';
-                str += user._id;
-                resource.link(user._id, str);
-
-                res.send(resource);
-            })
-            .catch(err => {
-                console.log('can not create user. ', err);
-                res.status(200);
-                res.send(new Hal.Resource({
-                    message: 'can not create user.',
-                    errors: err
-                }, req.url));
-            });
-    },
-
     get: function (req, res) {
         console.log('try to get user. ', req.params);
 
         User.findById(req.params.id)
             .then(reply => {
-                res.send(new Hal.Resource({
-                    User: reply._doc
-                }, req.url));
+                res.send(new Hal.Resource(reply._doc, req.url));
             })
             .catch(err => {
                 console.log('can not get user. ', err);

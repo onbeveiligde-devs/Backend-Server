@@ -15,7 +15,7 @@ module.exports = {
                     let str = req.url;
                     if (str.substr(-1) != '/') str += '/';
                     str += chat._id;
-                    resource.link(chat.subject, str);
+                    resource.link(chat.user, str);
                 });
 
                 res.send(resource);
@@ -32,19 +32,19 @@ module.exports = {
 
     create: function (req, res) {
 
-        let failed = false;
-
         // Check if user exists
-        User.findById(req.body.user)
+        User.findById(req.params.user)
             .then(user => {
                 if(!user) {
                     res.status(404).send(new Hal.Resource({
                         message: 'can not create chat.',
                         errors: err
                     }, req.url));
-                    failed = true;
                     return;
                 }
+
+                console.log('uid = ' + user._id);
+                console.log('aut = ' + req.body.author);
 
                 // Check if author exists
                 User.findById(req.body.author)
@@ -54,65 +54,53 @@ module.exports = {
                                 message: 'can not create chat.',
                                 errors: err
                             }, req.url));
-                            failed = true;
                             return;
                         }
 
                         // Check HASH in format "message-timestamp"
-
-                        crypto.verify(message + '-' + timestamp, req.body.hash, author.publicKey)
+                        console.log(req.body.message + '-' + req.body.timestamp);
+                        console.log(author);
+                        crypto.verify(req.body.message + '-' + req.body.timestamp, req.body.sign, author.publicKey)
                             .then(success => {
                                 console.log('message verified = ' + success);
 
-                                let chat = new Chat(user._id, author._id, message, timestamp, hash);
+                                let chat = new Chat({
+                                    user: user._id,
+                                    author: author._id,
+                                    message: req.body.message,
+                                    timestamp: new Date(req.body.timestamp * 1000),
+                                    sign: req.body.sign});
+                                chat.save()
+                                    .then(chat => {
+                                        res.status(200).json(chat);
+                                    }).catch(err => {
+                                        res.status(500).send(new Hal.Resource({
+                                            message: 'can not create chat.',
+                                            errors: err
+                                        }, req.url));
+                                    })
                             })
                             .catch(err => {
+                                console.log(err);
                                 res.status(404).send(new Hal.Resource({
                                     message: 'can not create chat.',
-                                    errors: err
+                                    errors: 'Could not verify signature'
                                 }, req.url));
-                                failed = true;
                                 return;
                             });
-
-
                     })
                     .catch(err => {
+                        console.log(err);
                         res.status(500).send(new Hal.Resource({
                             message: 'can not create chat.',
                             errors: err
                         }, req.url));
-                        failed = true;
                         return;
                     })
 
             })
             .catch(err => {
                 res.status(500).send(new Hal.Resource({
-                    message: 'can not create chat.',
-                    errors: err
-                }, req.url));
-            });
-
-        const chat = new Chat(req.body);
-        chat.save()
-            .then((reply) => {
-                let resource = new Hal.Resource({
-                    created: !chat.isNew,
-                    data: reply._doc
-                }, req.url);
-
-                let str = req.url;
-                if (str.substr(-1) != '/') str += '/';
-                str += chat._id;
-                resource.link(chat._id, str);
-
-                res.send(resource);
-            })
-            .catch(err => {
-                console.log('can not create chat. ', err);
-                res.status(200);
-                res.send(new Hal.Resource({
                     message: 'can not create chat.',
                     errors: err
                 }, req.url));

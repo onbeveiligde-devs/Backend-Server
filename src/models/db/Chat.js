@@ -31,11 +31,11 @@ const ChatSchema = new Schema({
         default: Date.now
     },
 
-    hash: {
+    sign: {
         type: String,
-        required: [true, 'The encrypted hash with format "timestamp-message" is required'],
+        required: [true, 'The encrypted hash with format "message-timestamp" is required'],
         validate: {
-            validator: (s) => s.length === 256,
+            validator: (s) => s.length >= 2,
             message: 'Hash must be 256 characters'
         }
     }
