@@ -15,7 +15,7 @@ module.exports = {
                     let str = req.url;
                     if (str.substr(-1) != '/') str += '/';
                     str += chat._id;
-                    resource.link(chat.user, str);
+                    resource.link(chat._id, str);
                 });
 
                 res.send(resource);
