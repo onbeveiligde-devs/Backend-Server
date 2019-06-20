@@ -9,6 +9,7 @@ const crypto = require("@trust/webcrypto");
 const bodyParser = require('body-parser');
 const btoa = require("btoa");
 const atob = require("atob");
+import { inspect } from 'util'
 
 class ChannelStatus {
     constructor() {
@@ -109,7 +110,7 @@ function str2ab(str) { // string to array buffer
 
 module.exports = {
     online: (req, res)=> {
-        res.send(JSON.stringify(channels));
+        res.send(util.inspect(channels));
     },
     index: (req, res) => {
         console.log('get /');
