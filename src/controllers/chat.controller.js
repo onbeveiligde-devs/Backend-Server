@@ -32,6 +32,9 @@ module.exports = {
 
     create: function (req, res) {
 
+        let failed = false;
+
+        // Check if user exists
         User.findById(req.body.user)
             .then(user => {
                 if(!user) {
@@ -39,11 +42,49 @@ module.exports = {
                         message: 'can not create chat.',
                         errors: err
                     }, req.url));
+                    failed = true;
+                    return;
                 }
 
-                //TODO: hier was ik
+                // Check if author exists
+                User.findById(req.body.author)
+                    .then(author => {
+                        if(!author) {
+                            res.status(404).send(new Hal.Resource({
+                                message: 'can not create chat.',
+                                errors: err
+                            }, req.url));
+                            failed = true;
+                            return;
+                        }
 
-                User.findById(req.body.)
+                        // Check HASH in format "message-timestamp"
+
+                        crypto.verify(message + '-' + timestamp, req.body.hash, author.publicKey)
+                            .then(success => {
+                                console.log('message verified = ' + success);
+
+                                let chat = new Chat(user._id, author._id, message, timestamp, hash);
+                            })
+                            .catch(err => {
+                                res.status(404).send(new Hal.Resource({
+                                    message: 'can not create chat.',
+                                    errors: err
+                                }, req.url));
+                                failed = true;
+                                return;
+                            });
+
+
+                    })
+                    .catch(err => {
+                        res.status(500).send(new Hal.Resource({
+                            message: 'can not create chat.',
+                            errors: err
+                        }, req.url));
+                        failed = true;
+                        return;
+                    })
 
             })
             .catch(err => {

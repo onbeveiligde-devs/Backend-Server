@@ -6,6 +6,7 @@ const Base64ArrayBufferUtil = require('base64-arraybuffer');
 module.exports = {
 
     verify: async function(data, sign, publicKeyBase64) {
+
         let publicKey = atob(publicKeyBase64);
         return new Promise(async (res, rej) => {
             console.log(data);

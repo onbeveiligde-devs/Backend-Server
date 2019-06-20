@@ -5,7 +5,7 @@ const {
 
 const UserSchema = new Schema({
 
-    publicKey: {
+    publicKey: { // base64 "wrapped" arraybuffer public key
         type: String,
         required: true,
         unique: true

@@ -101,5 +101,49 @@ module.exports = {
                     error: error
                 }))
             });
+    },
+
+    register: async function(req, res) {
+        let publicKey = req.body.publicKey;
+        let name = req.body.name;
+        let signature = req.body.sign;
+
+        let usersWithThatPublicKey = await User.find({$or: [{ publicKey: publicKey }, { name: name }]});
+        if(usersWithThatPublicKey && usersWithThatPublicKey.length) {
+            // public key or name taken
+            res.status(400).json(new Hal.Resource({
+                error: 'Public key or name not unique'
+            }));
+            return;
+        }
+
+        crypto.verify(name, signature, publicKey)
+            .then(success => {
+                console.log('verified name hash = ' + success);
+                if(!success) {
+                    res.status(400).json(new Hal.Resource({
+                        error: 'Invalid signature'
+                    }));
+                    return;
+                }
+
+                let user = new User({
+                    publicKey: publicKey,
+                    name: name,
+                    balance: 0
+                });
+                user.save()
+                    .then(u => {
+                        res.status(200).json(u);
+                    })
+                    .catch(err => {
+                        res.status(500).json(new Hal.Resource({
+                            error: err
+                        }));
+                    });
+
+            })
+            .catch(console.error);
+
     }
 };

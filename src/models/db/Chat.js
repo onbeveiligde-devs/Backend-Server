@@ -38,7 +38,7 @@ const ChatSchema = new Schema({
             validator: (s) => s.length === 256,
             message: 'Hash must be 256 characters'
         }
-    },
+    }
 });
 
 module.exports = mongoose.model('Chat', ChatSchema);
