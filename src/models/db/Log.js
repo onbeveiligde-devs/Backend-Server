@@ -15,12 +15,12 @@ const LogSchema = new Schema({
         type: String,
     },
 
-    hash: {
+    sign: {
         type: String,
-        required: [true, 'The encrypted hash is required.'],
+        required: [true, 'The encrypted hash with format "message-timestamp" is required'],
         validate: {
-            validator: (s) => s.length >= 64,
-            message: 'Hash must be 64 characters or longer'
+            validator: (s) => s.length >= 2,
+            message: 'Hash must be 256 characters'
         }
     },
 
