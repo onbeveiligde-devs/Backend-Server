@@ -1,7 +1,7 @@
 const socketio = require('socket.io');
 const Chat = require('../models/db/Chat');
 const User = require('../models/db/User');
-const crypto = require('./crypto');
+const crypto = require('../controllers/crypto');
 
 module.exports = {
     start: function (app) {
