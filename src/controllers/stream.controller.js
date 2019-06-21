@@ -5,10 +5,12 @@ const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
 const mongoose = require('mongoose');
 const User = require('../models/db/User');
-const crypto = require("@trust/webcrypto");
+const webCrypto = require("@trust/webcrypto");
+const crypto = require('./crypto');
 const bodyParser = require('body-parser');
 const btoa = require("btoa");
 const atob = require("atob");
+const Base64ArrayBufferUtil = require('base64-arraybuffer');
 
 class ChannelStatus {
     constructor() {
@@ -199,14 +201,8 @@ module.exports = {
             return;
         }
 
-        console.log("HIERBIJ DE REQUEST BODY");
-        console.log(req.body["blob_name"]);
-
         channel.isOnAir = true;
-        const signature = req.query["sign"];
-
-        console.log("Signature is " + signature);
-        console.log("Channelname is " + channel);
+        const signature = req.headers["signature"];
 
         var form = new multiparty.Form({
             maxFieldsSize: 4096 * 1024
@@ -223,79 +219,49 @@ module.exports = {
                 return;
             }
 
-            console.log("fields.keys()");
-            console.log(Object.keys(fields));
-
             const signedData = {
-                base64: fields["blob_base64"],
-                index: fields["blob_index"],
-                name: fields["blob_name"],
-                second: fields["blob_sec"]
+                base64: fields["blob_base64"][0], // used [0], because field values are an array
+                index: fields["blob_index"][0],
+                name: fields["blob_name"][0],
+                second: fields["blob_sec"][0]
             };
 
-            // console.log("SignedData");
-            // console.log(signedData);
-            // console.log(JSON.stringify(signedData));
+            // sign / crypto / integrity
 
-            // User.findOne({name: channel})
-            //     .then((user) => {
-            //         console.log("USER");
-            //         console.log(user);
-            //         crypto.subtle.importKey(
-            //             "spki", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
-            //             user["publicKey"],
-            //             {
-            //                 name: "RSASSA-PKCS1-v1_5",
-            //                 // Consider using a 4096-bit key for systems that require long-term security
-            //                 modulusLength: 2048,
-            //                 publicExponent: new Uint8Array([1, 0, 1]),
-            //                 hash: "SHA-256",
-            //             },
-            //             true, //whether the key is extractable (i.e. can be used in exportKey)
-            //             ["verify"] //"verify" for public key import, "sign" for private key imports
-            //         ).then(function(publicKey){
-            //             //returns a publicKey (or privateKey if you are importing a private key)
-            //
-            //             console.log("DIT IS EEN PUBLIC KEY STUK");
-            //
-            //             return crypto.subtle.verify(
-            //                 {
-            //                     name: "RSASSA-PKCS1-v1_5",
-            //                     hash: {name: "SHA-256"},
-            //                 },
-            //                 publicKey,
-            //                 str2ab(signature),
-            //                 str2ab("Hoi")
-            //             );
-            //             str2ab(btoa(JSON.stringify(signedData)))
-            //
-            //         }).then((result) => {
-            //             console.log( "De result is");
-            //             console.log(result);
-            //         }).catch(err => {
-            //             console.log(err);
-            //         });
-            //
-            //     });
+            User.findOne({name: channel})
+                .then((user )=> {
+                    return crypto.verify(
+                        JSON.stringify(signedData),
+                        signature,
+                        user["publicKey"]
+                    );
+                })
+                .then((result) => {
+                    if(result == true){
+                        console.log("This video stream is succesfully verified.");
+                        var postIndex = fields.blob_index[0];
+                        var postSec = fields.blob_sec[0];
+                        var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
+                        var buf = Buffer.from(fields.blob_base64[0], 'base64');
+                        writeWebM(filename, buf, buf.length);
+                        channelStatus.currentSeq = postIndex;
+                        channelStatus.currentSec = postSec;
+                        channelStatus.storedSec = postSec;
 
-            // console.log("fields");
-            // console.log(fields);
+                        res.writeHead(200, {
+                            'content-type': 'text/plain'
+                        });
+                        res.write('received upload:\n\n');
+                        res.end('upload index=' + postIndex + ' , sec=' + postSec);
+                    } else{
+                        console.log("Possible the stream is intercepted. The sent signature is invalid.");
 
-            var postIndex = fields.blob_index[0];
-            var postSec = fields.blob_sec[0];
-            var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-            var buf = Buffer.from(fields.blob_base64[0], 'base64');
-            writeWebM(filename, buf, buf.length);
-            channelStatus.currentSeq = postIndex;
-            channelStatus.currentSec = postSec;
-            channelStatus.storedSec = postSec;
-
-            res.writeHead(200, {
-                'content-type': 'text/plain'
-            });
-            res.write('received upload:\n\n');
-            res.end('upload index=' + postIndex + ' , sec=' + postSec);
-
+                        res.writeHead(401, {
+                            'content-type': 'text/plain'
+                        });
+                        res.end("This message was intercepted. The sign was not correct.");
+                    }
+                });
         });
     }
-}
+};

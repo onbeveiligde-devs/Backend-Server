@@ -5,14 +5,10 @@ const Base64ArrayBufferUtil = require('base64-arraybuffer');
 
 module.exports = {
 
-    verify: async function(data, sign, publicKeyBase64) {
+    verify: async function(data, sign, publicKeyBase64) { // data should be a string, sign should be a base64sign
 
         let publicKey = atob(publicKeyBase64);
         return new Promise(async (res, rej) => {
-            console.log(data);
-            console.log(sign);
-            console.log(publicKey);
-
             let pub = await this.unwrapKey(publicKey, false);
 
             WebCrypto.subtle.verify(
@@ -25,14 +21,12 @@ module.exports = {
                 this.str2ab(data)
             )
                 .then(succ => {
-                    console.log(succ);
                     res(succ);
                 })
                 .catch(err => {
                     console.error(err);
                     rej(err);
                 });
-            console.log('b');
         });
     },
 
