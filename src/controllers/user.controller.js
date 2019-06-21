@@ -1,7 +1,7 @@
 const User = require('../models/db/User');
 const Hal = require('hal');
 const Log = require('../models/Log');
-const crypto = require('./crypto');
+const crypto = require('../models/crypto');
 
 module.exports = {
     list: function (req, res) {

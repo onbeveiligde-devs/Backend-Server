@@ -4,7 +4,7 @@ const fs = require('fs');
 const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
 const User = require('../models/db/User');
-const crypto = require('./crypto');
+const crypto = require('../models/crypto');
 const util = require('util');
 
 class ChannelStatus {
