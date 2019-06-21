@@ -27,8 +27,8 @@ module.exports = {
 
             if (typeof (data.message) !== 'undefined' &&
                 typeof (data.author) !== 'undefined' &&
-                typeof (subject) !== 'undefined' &&
-                typeof (timestamp) !== 'undefined'
+                typeof (data.subject) !== 'undefined' &&
+                typeof (data.timestamp) !== 'undefined'
             ) {
                 // Check if user exists
                 User.findById(data.subject)
