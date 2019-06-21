@@ -23,15 +23,7 @@ module.exports = {
             .then((reply) => {
                 //Shortens certificate for use in console.log (for readability purposes)
                 let shortCert = certificate.substring(0, 11);
-
-                // TODO: Figure out if !log.isNew is needed here
-                // if (!log.isNew) {
-                //     console.log("ERROR: LOG ITEM ALREADY EXISTS: " + shortCert + " " + data)
-                //
-                // } else {
-
-                    console.log("NEW LOG ITEM: " + shortCert + " " + data);
-                // }
+                    console.log("NEW LOG ITEM: " + shortCert + " " + data)
 
             })
             .catch(err => {
