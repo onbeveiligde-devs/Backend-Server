@@ -8,7 +8,7 @@ describe('Create a chat', () => {
         
         const chat = new Chat({
             certificateSubject: 'Subject Certificate',
-            certificateAuthor: 'Certificate Author',
+            author: 'Certificate Author',
             messageHash: 'Hash for the message',
             message: 'Test message'
         });

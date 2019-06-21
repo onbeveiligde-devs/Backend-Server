@@ -3,14 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const uuid = require('node-uuid');
 require('dotenv').config({path: '.env'});
-const mongoose = require('mongoose');
 const User = require('../models/db/User');
-const webCrypto = require("@trust/webcrypto");
 const crypto = require('./crypto');
-const bodyParser = require('body-parser');
-const btoa = require("btoa");
-const atob = require("atob");
-const Base64ArrayBufferUtil = require('base64-arraybuffer');
+const util = require('util');
 
 class ChannelStatus {
     constructor() {
@@ -111,7 +106,7 @@ function str2ab(str) { // string to array buffer
 
 module.exports = {
     online: (req, res)=> {
-        res.send(JSON.stringify(channels));
+        res.send(util.inspect(channels));
     },
     index: (req, res) => {
         console.log('get /');

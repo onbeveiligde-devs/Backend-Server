@@ -5,7 +5,7 @@ describe('validate chat', () => {
     it('require chat certificate', () => {
         const chat = new Chat({
             certificateSubject: undefined,
-            certificateAuthor: undefined,
+            author: undefined,
             messageHash: 'Test hash',
             message: 'Test message'
         });
@@ -25,7 +25,7 @@ describe('validate chat', () => {
     it('require chat certificate longer than 1024 characters', () => {
         const chat = new Chat({
             certificateSubject: 'A',
-            certificateAuthor: 'TestAuthor',
+            author: 'TestAuthor',
             messageHash: 'Test hash',
             message: 'Test message'
         });
