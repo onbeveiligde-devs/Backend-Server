@@ -28,7 +28,7 @@ module.exports = {
             User.findById(data.subject)
                 .then(user => {
                     if (!user) {
-                        console.log('user does not exists for ' + socket.handshake.address);
+                        console.log('user does not exists for ' + socket.handshake.address, [data, user]);
                         io.emit('ERRTOCLIENT', {
                             message: 'user does not exists for ' + socket.handshake.address,
                             errors: 404
@@ -62,7 +62,7 @@ module.exports = {
                                         user: user._id,
                                         author: author._id,
                                         message: data.message,
-                                        timestamp: new Date(Date.now() * 1000),
+                                        timestamp: new Date(data.timestamp * 1000),
                                         sign: data.sign
                                     });
                                     chat.save()
