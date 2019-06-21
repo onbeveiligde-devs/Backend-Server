@@ -8,15 +8,15 @@ module.exports = {
     /**
      * Creates a new log item in the database.
      *
-     * @param publicKey = the public key of the user carrying out the action / event
-     * @param data = the type of action / event that is happening (ie: FOLLOWS <public key>, STARTS_STREAM, STOPS_STREAM)
-     * @param hash = the hash of the log item. It is encrypted with the private key from the user
+     * @param publicKey the public key of the user carrying out the action / event
+     * @param data the type of action / event that is happening (ie: FOLLOWS <public key>, STARTS_STREAM, STOPS_STREAM)
+     * @param signature the signature of the log item. It is encrypted with the private key from the user
      */
-    save(publicKey, data ,hash) {
+    save(publicKey, data ,signature) {
         const log = new Log({
             publicKey: publicKey,
             data: data,
-            hash: hash
+            signature: signature
         });
 
         log.save()
