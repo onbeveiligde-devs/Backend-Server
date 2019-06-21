@@ -10,13 +10,13 @@ module.exports = {
      *
      * @param publicKey the public key of the user carrying out the action / event
      * @param data the type of action / event that is happening (ie: FOLLOWS <public key>, STARTS_STREAM, STOPS_STREAM)
-     * @param signature the signature of the log item. It is encrypted with the private key from the user
+     * @param sign the signature of the log item. It is encrypted with the private key from the user
      */
-    save(publicKey, data ,signature) {
+    save(publicKey, data ,sign) {
         const log = new Log({
             publicKey: publicKey,
             data: data,
-            signature: signature
+            sign: sign
         });
 
         log.save()
