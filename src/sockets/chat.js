@@ -62,7 +62,7 @@ module.exports = {
                                         user: user._id,
                                         author: author._id,
                                         message: data.message,
-                                        timestamp: new Date(data.timestamp * 1000),
+                                        timestamp: new Date(Date.now() * 1000),
                                         sign: data.sign
                                     });
                                     chat.save()
