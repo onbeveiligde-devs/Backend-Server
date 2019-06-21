@@ -24,8 +24,8 @@ module.exports = {
         socket.on('MSGTOSERV', function (data) { // received from client
             console.log('try to save message from ' + socket.handshake.address);
             if (typeof (data.message) !== 'undefined' &&
-                typeof (data.certificateAuthor) !== 'undefined' &&
-                auth.verify(data.message, data.certificateAuthor)
+                typeof (data.author) !== 'undefined' &&
+                auth.verify(data.message, data.author)
             ) {
                 const chat = new Chat(data);
                 chat.save()
