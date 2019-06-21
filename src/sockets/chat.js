@@ -28,7 +28,7 @@ module.exports = {
             User.findById(data.subject)
                 .then(user => {
                     if (!user) {
-                        console.log('user does not exists for ' + socket.handshake.address, err);
+                        console.log('user does not exists for ' + socket.handshake.address);
                         io.emit('ERRTOCLIENT', {
                             message: 'user does not exists for ' + socket.handshake.address,
                             errors: 404
@@ -43,7 +43,7 @@ module.exports = {
                     User.findById(data.author)
                         .then(author => {
                             if (!author) {
-                                console.log('author does not exists for ' + socket.handshake.address, err);
+                                console.log('author does not exists for ' + socket.handshake.address);
                                 io.emit('ERRTOCLIENT', {
                                     message: 'author does not exists for ' + socket.handshake.address,
                                     errors: 404
