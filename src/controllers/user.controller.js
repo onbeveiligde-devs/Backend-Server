@@ -59,6 +59,7 @@ module.exports = {
                 res.status(success ? 200 : 400).json(new Hal.Resource({
                     success: success
                 }))
+                Log.save(publicKey, "LOGGED_IN", sign);
             })
             .catch(error => {
                 res.status(500).json(new Hal.Resource({
@@ -100,6 +101,7 @@ module.exports = {
                 user.save()
                     .then(u => {
                         res.status(200).json(u);
+                        Log.save(publicKey, "REGISTERED", signature);
                     })
                     .catch(err => {
                         res.status(500).json(new Hal.Resource({
