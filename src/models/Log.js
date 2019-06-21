@@ -10,7 +10,7 @@ module.exports = {
      *
      * @param publicKey the public key of the user carrying out the action / event
      * @param data the type of action / event that is happening (ie: FOLLOWS <public key>, STARTS_STREAM, STOPS_STREAM)
-     * @param sign the signature of the log item. It is encrypted with the private key from the user
+     * @param sign the signature of the log item.
      */
     save(publicKey, data ,sign) {
         const log = new Log({
@@ -21,9 +21,9 @@ module.exports = {
 
         log.save()
             .then((reply) => {
-                //Shortens the public key for use in console.log (for readability purposes)
-                let shortPubKey = publicKey.substring(0, 11);
-                    console.log("NEW LOG ITEM: " + shortPubKey + " " + data)
+                    // public key is shortened for readability purposes, the full public key is
+                    // still stored in the database
+                    console.log("NEW LOG ITEM: " + publicKey.substring(0, 11) + " " + data)
 
             })
             .catch(err => {
