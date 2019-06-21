@@ -8,22 +8,22 @@ module.exports = {
     /**
      * Creates a new log item in the database.
      *
-     * @param certificate = the certificate of the user carrying out the action / event
-     * @param data = the type of action / event that is happening (ie: FOLLOWS <certificate>, STARTS_STREAM, STOPS_STREAM)
+     * @param publicKey = the public key of the user carrying out the action / event
+     * @param data = the type of action / event that is happening (ie: FOLLOWS <public key>, STARTS_STREAM, STOPS_STREAM)
      * @param hash = the hash of the log item. It is encrypted with the private key from the user
      */
-    save(certificate, data ,hash) {
+    save(publicKey, data ,hash) {
         const log = new Log({
-            certificate: certificate,
+            publicKey: publicKey,
             data: data,
             hash: hash
         });
 
         log.save()
             .then((reply) => {
-                //Shortens certificate for use in console.log (for readability purposes)
-                let shortCert = certificate.substring(0, 11);
-                    console.log("NEW LOG ITEM: " + shortCert + " " + data)
+                //Shortens the public key for use in console.log (for readability purposes)
+                let shortPubKey = publicKey.substring(0, 11);
+                    console.log("NEW LOG ITEM: " + shortPubKey + " " + data)
 
             })
             .catch(err => {

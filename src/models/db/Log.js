@@ -5,13 +5,9 @@ const {
 
 const LogSchema = new Schema({
 
-    certificate: {
+    publicKey: {
         type: String,
         required: [true, 'Certificate is required.'],
-        validate: {
-            validator: (s) => s.length >= 1024,
-            message: 'Certificate must be 1024 characters or longer.'
-        }
     },
 
     data: {
