@@ -1,7 +1,7 @@
 const Chat = require('../models/db/Chat');
 const User = require('../models/db/User');
 const Hal = require('hal');
-const crypto = require('./crypto');
+const crypto = require('../models/crypto');
 
 module.exports = {
     list: function (req, res) {
