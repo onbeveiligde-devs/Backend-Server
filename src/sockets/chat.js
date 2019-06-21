@@ -9,16 +9,8 @@ module.exports = {
 
         // socket connection
         io.on('connection', function (socket) { // connected with socket
-            module.exports.hello(socket, io);
             module.exports.message(socket, io);
         });
-    },
-
-    hello: function (socket, io) {
-        // console.log('socket id: ', socket.id) // connected with client
-        let address = socket.handshake.address;
-        console.log('New connection from ' + address + '. Browser: ', socket.handshake.headers['user-agent']);
-        io.emit('NEWCONNECTION', address); // send to client
     },
 
     message: function (socket, io) {
