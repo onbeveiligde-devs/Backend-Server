@@ -20,7 +20,8 @@ module.exports = {
             if (typeof (data.message) !== 'undefined' &&
                 typeof (data.author) !== 'undefined' &&
                 typeof (data.subject) !== 'undefined' &&
-                typeof (data.timestamp) !== 'undefined'
+                typeof (data.timestamp) !== 'undefined' &&
+                typeof (data.sign) !== 'undefined'
             ) {
                 // Check if user exists
                 User.findById(data.subject)
@@ -50,41 +51,41 @@ module.exports = {
                                 }
 
                                 // Check HASH in format "message-timestamp"
-                                console.log(data.message + '-' + data.timestamp);
-                                console.log(author);
-                                crypto.verify(data.message + '-' + data.timestamp, data.sign, author.publicKey)
-                                    .then(success => {
-                                        console.log('message verified = ' + success);
+                                // console.log(data.message + '-' + data.timestamp);
+                                // console.log(author);
+                                // crypto.verify(data.message + '-' + data.timestamp, data.sign, author.publicKey)
+                                //     .then(success => {
+                                //         console.log('message verified = ' + success);
 
-                                        let chat = new Chat({
-                                            user: user._id,
-                                            author: author._id,
-                                            message: data.message,
-                                            timestamp: new Date(data.timestamp * 1000),
-                                            sign: data.sign
-                                        });
-                                        chat.save()
-                                            .then(chat => {
-                                                console.log('message saved from ' + socket.handshake.address + '. Try to load it...');
-                                                io.emit('MSGTOCLIENT', chat); // send to client
-                                                console.log('message loaded and send to ' + socket.handshake.address);
-                                            }).catch(err => {
-                                                console.log('can not create chat for ' + socket.handshake.address, err);
-                                                io.emit('ERRTOCLIENT', {
-                                                    message: 'can not create chat for ' + socket.handshake.address,
-                                                    errors: err
-                                                }); // send to client
-                                            })
-                                    })
-                                    .catch(err => {
-                                        console.log(err);
+                                let chat = new Chat({
+                                    user: user._id,
+                                    author: author._id,
+                                    message: data.message,
+                                    timestamp: new Date(data.timestamp * 1000),
+                                    sign: data.sign
+                                });
+                                chat.save()
+                                    .then(chat => {
+                                        console.log('message saved from ' + socket.handshake.address + '. Try to load it...');
+                                        io.emit('MSGTOCLIENT', chat); // send to client
+                                        console.log('message loaded and send to ' + socket.handshake.address);
+                                    }).catch(err => {
                                         console.log('can not create chat for ' + socket.handshake.address, err);
                                         io.emit('ERRTOCLIENT', {
-                                            message: 'Could not verify signature for ' + socket.handshake.address,
+                                            message: 'can not create chat for ' + socket.handshake.address,
                                             errors: err
                                         }); // send to client
-                                        return;
-                                    });
+                                    })
+                                // })
+                                // .catch(err => {
+                                //     console.log(err);
+                                //     console.log('can not create chat for ' + socket.handshake.address, err);
+                                //     io.emit('ERRTOCLIENT', {
+                                //         message: 'Could not verify signature for ' + socket.handshake.address,
+                                //         errors: err
+                                //     }); // send to client
+                                //     return;
+                                // });
                             })
                             .catch(err => {
                                 console.log('can not create chat for ' + socket.handshake.address, err);
@@ -111,7 +112,8 @@ module.exports = {
                         message: 'message',
                         author: 'user._id',
                         subject: 'subject',
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        sign: this.message + '-' + this.timestamp
                     }
                 }); // send to client
             }

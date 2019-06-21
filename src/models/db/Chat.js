@@ -8,13 +8,13 @@ const ChatSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: [true, "User is required"]
     },
 
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: [true, "Author is required"]
     },
 
     message: {
