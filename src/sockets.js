@@ -1,7 +1,7 @@
 const socketio = require('socket.io');
-const Chat = require('../models/db/Chat');
-const User = require('../models/db/User');
-const crypto = require('../models/crypto');
+const Chat = require('./models/db/Chat');
+const User = require('./models/db/User');
+const crypto = require('./models/crypto');
 
 module.exports = {
     start: function (app) {
@@ -17,14 +17,16 @@ module.exports = {
 
     online: function (socket, io) {
         socket.on('HITOSERV', function (data) { // received from client
-            console.log('hi server from ' + socket.handshake.address);
-            if (typeof (data._id) !== 'undefined' &&
+            console.log('try to say hi from ' + socket.handshake.address);
+
+            if (typeof (data) !== 'undefined' &&
+                typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
                 console.log('hi clients', data);
                 io.emit('ONLINE', data); // send to client
             } else {
-                console.log('hi undefined');
+                console.log('hi undefined', data);
             }
         });
     },
@@ -32,7 +34,9 @@ module.exports = {
     offline: function (socket, io) {
         socket.on('BYETOSERV', function (data) { // received from client
             console.log('bye server from ' + socket.handshake.address);
-            if (typeof (data._id) !== 'undefined' &&
+
+            if (typeof (data) !== 'undefined' &&
+                typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
                 console.log('bye clients', data);
@@ -47,7 +51,8 @@ module.exports = {
         socket.on('MSGTOSERV', function (data) { // received from client
             console.log('try to save message from ' + socket.handshake.address);
 
-            if (typeof (data.message) !== 'undefined' &&
+            if (typeof (data) !== 'undefined' &&
+                typeof (data.message) !== 'undefined' &&
                 typeof (data.author) !== 'undefined' &&
                 typeof (data.subject) !== 'undefined' &&
                 typeof (data.timestamp) !== 'undefined' &&

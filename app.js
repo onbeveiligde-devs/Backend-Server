@@ -48,7 +48,7 @@ const server = app.listen(port, function () {
 });
 
 // sockets
-const sockets = require('./src/sockets/chat');
+const sockets = require('./src/sockets');
 sockets.start(server);
 
 module.exports = {
