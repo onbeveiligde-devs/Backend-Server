@@ -25,7 +25,7 @@ app.use(cross()); // Allow Cross Domain Requests
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/src/views');
 app.use(express.static(path.join(__dirname, 'src/public')));
-app.use('/crypto', express.static(path.join(__dirname, 'src/controllers/crypto.js')));
+app.use('/crypto', express.static(path.join(__dirname, 'src/models/crypto.js')));
 
 // endpoints
 const streamRoutes = require('./src/routes/stream.routes');
