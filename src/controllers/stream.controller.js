@@ -94,19 +94,17 @@ function writeWebM(filename, buf, endPosition) {
     writeStream.end();
 }
 
-function str2ab(str) { // string to array buffer
-    var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-    var bufView = new Uint16Array(buf);
-    for (var i=0, strLen=str.length; i < strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-    }
-    return buf;
-}
-
-
 module.exports = {
-    online: (req, res)=> {
-        res.send(util.inspect(channels));
+    online: (req, res) => {
+        let responseObj = {
+            streams: []
+        };
+        for(channel in channels) {
+            if(channels.hasOwnProperty(channel))
+                responseObj.streams.push(channels[channel]);
+        }
+        res.json(responseObj);
+        //res.send(util.inspect(channels));
     },
     index: (req, res) => {
         console.log('get /');
