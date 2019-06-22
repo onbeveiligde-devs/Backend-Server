@@ -16,25 +16,29 @@ module.exports = {
     },
 
     online: function (socket, io) {
-        socket.on('HISERV', function (data) { // received from client
+        socket.on('HITOSERV', function (data) { // received from client
             console.log('hi server from ' + socket.handshake.address);
             if (typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
                 console.log('hi clients', data);
                 io.emit('ONLINE', data); // send to client
+            } else {
+                console.log('hi undefined');
             }
         });
     },
 
     offline: function (socket, io) {
-        socket.on('BYESERV', function (data) { // received from client
+        socket.on('BYETOSERV', function (data) { // received from client
             console.log('bye server from ' + socket.handshake.address);
             if (typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
                 console.log('bye clients', data);
                 io.emit('OFFLINE', data); // send to client
+            } else {
+                console.log('bye undefined');
             }
         });
     },
