@@ -99,9 +99,25 @@ module.exports = {
         let responseObj = {
             streams: []
         };
-        for(channel in channels) {
-            if(channels.hasOwnProperty(channel))
-                responseObj.streams.push(channels[channel]);
+        for(key in channels) {
+            /*
+        this.name = '';
+        this.uuid = '';
+        this.dir = '';
+        this.isOnAir = false;
+        this.currentSeq = 0;
+        this.storedSec = 0;
+        this.filePrefix = '';
+        this.watchers = [];*/
+            if (channels.hasOwnProperty(key)) {
+                let channel = channels[key];
+                responseObj.streams.push({
+                    name: channel.name,
+                    uuid: channel.uuid,
+                    isOnAir: channel.isOnAir,
+                    watcherCount: channel.watchers.length
+                });
+            }
         }
         res.json(responseObj);
         //res.send(util.inspect(channels));
