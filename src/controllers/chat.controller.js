@@ -22,14 +22,10 @@ module.exports = {
     },
 
     allByUserId: function (req, res) {
-        let u = req.params.user || null;
-        if (u == null) {
-            res.send({
-                "messages": []
-            });
-        } else {
+        console.log('try to get list of messages by user id', req.params.user);
+        if (req.params.user !== null) {
             Chat.find({
-                    user: u
+                    user: req.params.user
                 })
                 .then(messages => {
                     res.send({
@@ -37,13 +33,18 @@ module.exports = {
                     });
                 })
                 .catch(err => {
-                    console.log('can not get a list of messages by user id. ', err);
+                    console.log('can not get a list of messages by user id. ');
                     res.status(200);
                     res.send(new Hal.Resource({
                         message: 'can not get a list of messages by user id.',
                         errors: err
                     }, req.url));
                 });
+        } else {
+            console.log('empty list of messages by user id');
+            res.send({
+                "messages": []
+            });
         }
     },
 
