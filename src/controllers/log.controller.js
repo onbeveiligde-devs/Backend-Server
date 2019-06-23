@@ -52,13 +52,9 @@ module.exports = {
     get: function (req, res) {
         console.log('try to get log. ', req.params);
 
-        Log.findOne({
-                _id: req.params.id
-            })
+        Log.findById(req.params.id)
             .then(reply => {
-                res.send(new Hal.Resource({
-                    Log: reply._doc
-                }, req.url));
+                res.send(reply._doc);
             })
             .catch(err => {
                 console.log('can not get log. ', err);

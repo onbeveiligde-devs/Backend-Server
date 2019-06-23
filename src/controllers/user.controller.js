@@ -28,7 +28,7 @@ module.exports = {
 
         User.findById(req.params.id)
             .then(reply => {
-                res.send(new Hal.Resource(reply._doc, req.url));
+                res.send(reply._doc);
             })
             .catch(err => {
                 console.log('can not get user. ', err);

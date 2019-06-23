@@ -2,7 +2,9 @@ const multiparty = require('multiparty');
 const path = require('path');
 const fs = require('fs');
 const uuid = require('node-uuid');
-require('dotenv').config({path: '.env'});
+require('dotenv').config({
+    path: '.env'
+});
 const User = require('../models/db/User');
 const crypto = require('../models/crypto');
 const util = require('util');
@@ -99,7 +101,7 @@ module.exports = {
         let responseObj = {
             streams: []
         };
-        for(key in channels) {
+        for (key in channels) {
             /*
         this.name = '';
         this.uuid = '';
@@ -203,11 +205,7 @@ module.exports = {
         var channel = req.params.channel;
         var channelStatus = getChannelStatus(channel);
         if (!channelStatus) {
-            res.writeHead(500, {
-                'content-type': 'text/plain'
-            });
-            res.end('Server Error');
-            return;
+            channelStatus = startChannel(channel);
         }
 
         channel.isOnAir = true;
@@ -234,19 +232,20 @@ module.exports = {
                 name: fields["blob_name"][0],
                 second: fields["blob_sec"][0]
             };
+            console.log('signed user data', signedData);
 
             // sign / crypto / integrity
-
-            User.findOne({name: channel})
-                .then((user )=> {
+            User.findById(channel)
+                .then(reply => {
+                    console.log('found user', reply);
                     return crypto.verify(
                         JSON.stringify(signedData),
                         signature,
-                        user["publicKey"]
+                        reply._doc.publicKey
                     );
                 })
                 .then((result) => {
-                    if(result == true){
+                    if (result == true) {
                         console.log("This video stream is succesfully verified.");
                         var postIndex = fields.blob_index[0];
                         var postSec = fields.blob_sec[0];
@@ -262,7 +261,7 @@ module.exports = {
                         });
                         res.write('received upload:\n\n');
                         res.end('upload index=' + postIndex + ' , sec=' + postSec);
-                    } else{
+                    } else {
                         console.log("Possible the stream is intercepted. The sent signature is invalid.");
 
                         res.writeHead(401, {
