@@ -5,17 +5,16 @@ const {
 
 const UserSchema = new Schema({
 
-    certificate: {
+    publicKey: { // base64 "wrapped" arraybuffer public key
         type: String,
-        validate: {
-            validator: (s) => s.length > 1024,
-            message: 'Certificate must be longer than 1024 characters.'
-        }
+        required: true,
+        unique: true
     },
 
-    publicKey: {
-        type: Object,
-        default: {}
+    circleSighn: { // hash of public key and encripted by the cercle (private key of the server)
+        type: String,
+        required: false,
+        unique: false
     },
 
     name: {
@@ -23,15 +22,8 @@ const UserSchema = new Schema({
         validate: {
             validator: (s) => s.length > 2,
             message: 'The name must be longer than 2 characters.'
-        }
-    },
-
-    nameHash: {
-        type: String,
-        validate: {
-            validator: (s) => s.length > 8,
-            message: 'The hash must be longer than 8 characters.'
-        }
+        },
+        unique: true
     },
 
     balance: {

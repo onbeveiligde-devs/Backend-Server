@@ -7,18 +7,9 @@ module.exports = {
 
         Log.find()
             .then(logs => {
-                let resource = new Hal.Resource({
+                res.send({
                     "logs": logs
-                }, req.url);
-
-                logs.forEach(log => {
-                    let str = req.url;
-                    if (str.substr(-1) != '/') str += '/';
-                    str += log._id;
-                    resource.link(log._id, str);
                 });
-
-                res.send(resource);
             })
             .catch(err => {
                 console.log('can not get a list of logs. ', err);
@@ -61,13 +52,9 @@ module.exports = {
     get: function (req, res) {
         console.log('try to get log. ', req.params);
 
-        Log.findOne({
-                _id: req.params.id
-            })
+        Log.findById(req.params.id)
             .then(reply => {
-                res.send(new Hal.Resource({
-                    Log: reply._doc
-                }, req.url));
+                res.send(reply._doc);
             })
             .catch(err => {
                 console.log('can not get log. ', err);

@@ -2,13 +2,12 @@ const multiparty = require('multiparty');
 const path = require('path');
 const fs = require('fs');
 const uuid = require('node-uuid');
-require('dotenv').config({path: '.env'});
-const mongoose = require('mongoose');
+require('dotenv').config({
+    path: '.env'
+});
 const User = require('../models/db/User');
-const crypto = require("@trust/webcrypto");
-const bodyParser = require('body-parser');
-const btoa = require("btoa");
-const atob = require("atob");
+const crypto = require('../models/crypto');
+const util = require('util');
 
 class ChannelStatus {
     constructor() {
@@ -97,19 +96,33 @@ function writeWebM(filename, buf, endPosition) {
     writeStream.end();
 }
 
-function str2ab(str) { // string to array buffer
-    var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-    var bufView = new Uint16Array(buf);
-    for (var i=0, strLen=str.length; i < strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-    }
-    return buf;
-}
-
-
 module.exports = {
-    online: (req, res)=> {
-        res.send(JSON.stringify(channels));
+    online: (req, res) => {
+        let responseObj = {
+            streams: []
+        };
+        for (key in channels) {
+            /*
+        this.name = '';
+        this.uuid = '';
+        this.dir = '';
+        this.isOnAir = false;
+        this.currentSeq = 0;
+        this.storedSec = 0;
+        this.filePrefix = '';
+        this.watchers = [];*/
+            if (channels.hasOwnProperty(key)) {
+                let channel = channels[key];
+                responseObj.streams.push({
+                    name: channel.name,
+                    uuid: channel.uuid,
+                    isOnAir: channel.isOnAir,
+                    watcherCount: channel.watchers.length
+                });
+            }
+        }
+        res.json(responseObj);
+        //res.send(util.inspect(channels));
     },
     index: (req, res) => {
         console.log('get /');
@@ -192,21 +205,11 @@ module.exports = {
         var channel = req.params.channel;
         var channelStatus = getChannelStatus(channel);
         if (!channelStatus) {
-            res.writeHead(500, {
-                'content-type': 'text/plain'
-            });
-            res.end('Server Error');
-            return;
+            channelStatus = startChannel(channel);
         }
 
-        console.log("HIERBIJ DE REQUEST BODY");
-        console.log(req.body["blob_name"]);
-
         channel.isOnAir = true;
-        const signature = req.query["sign"];
-
-        console.log("Signature is " + signature);
-        console.log("Channelname is " + channel);
+        const signature = req.headers["signature"];
 
         var form = new multiparty.Form({
             maxFieldsSize: 4096 * 1024
@@ -223,72 +226,50 @@ module.exports = {
                 return;
             }
 
-            console.log("fields.keys()");
-            console.log(Object.keys(fields));
-
             const signedData = {
-                base64: fields["blob_base64"],
-                index: fields["blob_index"],
-                name: fields["blob_name"],
-                second: fields["blob_sec"]
+                base64: fields["blob_base64"][0], // used [0], because field values are an array
+                index: fields["blob_index"][0],
+                name: fields["blob_name"][0],
+                second: fields["blob_sec"][0]
             };
+            // console.log('signed user data', signedData);
 
-            console.log("SignedData");
-            console.log(signedData);
-            console.log(JSON.stringify(signedData));
+            // sign / crypto / integrity
+            User.findById(channel)
+                .then(reply => {
+                    // console.log('found user', reply);
+                    return crypto.verify(
+                        JSON.stringify(signedData),
+                        signature,
+                        reply._doc.publicKey
+                    );
+                })
+                .then((result) => {
+                    if (result == true) {
+                        console.log("This video stream is succesfully verified.");
+                        var postIndex = fields.blob_index[0];
+                        var postSec = fields.blob_sec[0];
+                        var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
+                        var buf = Buffer.from(fields.blob_base64[0], 'base64');
+                        writeWebM(filename, buf, buf.length);
+                        channelStatus.currentSeq = postIndex;
+                        channelStatus.currentSec = postSec;
+                        channelStatus.storedSec = postSec;
 
-            User.findOne({name: channel})
-                .then((user) => {
-                    console.log("USER");
-                    console.log(user);
-                    crypto.subtle.importKey(
-                        "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
-                        user["publicKey"],
-                        {   //these are the algorithm options
-                            name: "ECDSA",
-                            namedCurve: "P-256", //can be "P-256", "P-384", or "P-521"
-                        },
-                        true, //whether the key is extractable (i.e. can be used in exportKey)
-                        ["verify"] //"verify" for public key import, "sign" for private key imports
-                    ).then(function(publicKey){
-                        //returns a publicKey (or privateKey if you are importing a private key)
+                        res.writeHead(200, {
+                            'content-type': 'text/plain'
+                        });
+                        res.write('received upload:\n\n');
+                        res.end('upload index=' + postIndex + ' , sec=' + postSec);
+                    } else {
+                        console.log("Possible the stream is intercepted. The sent signature is invalid.");
 
-                        return crypto.subtle.verify(
-                            {
-                                name: "ECDSA",
-                                hash: {name: "SHA-256"},
-                            },
-                            publicKey,
-                            signature,
-                            str2ab(btoa(JSON.stringify(signedData)))
-                        );
-                    }).then((result) => {
-                        console.log( "De result is");
-                        console.log(result);
-                    }).catch(err => {
-                        console.log(err);
-                    });
-
+                        res.writeHead(401, {
+                            'content-type': 'text/plain'
+                        });
+                        res.end("This message was intercepted. The sign was not correct.");
+                    }
                 });
-
-            // console.log("fields");
-            // console.log(fields);
-
-            var postIndex = fields.blob_index[0];
-            var postSec = fields.blob_sec[0];
-            var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-            var buf = Buffer.from(fields.blob_base64[0], 'base64');
-            writeWebM(filename, buf, buf.length);
-            channelStatus.currentSeq = postIndex;
-            channelStatus.currentSec = postSec;
-            channelStatus.storedSec = postSec;
-
-            res.writeHead(200, {
-                'content-type': 'text/plain'
-            });
-            res.write('received upload:\n\n');
-            res.end('upload index=' + postIndex + ' , sec=' + postSec);
-
         });
     }
-}
+};

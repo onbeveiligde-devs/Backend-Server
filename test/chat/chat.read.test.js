@@ -7,7 +7,7 @@ describe('Read messages out of database', () => {
     beforeEach((done) => {
         chat = new Chat({
             certificateSubject: 'Read Certificate Test',
-            certificateAuthor: 'Read Certificate TestAuthor',
+            author: 'Read Certificate TestAuthor',
             messageHash: 'Hash for the message for the read tests',
             message: 'Message for the read tests'
         });
