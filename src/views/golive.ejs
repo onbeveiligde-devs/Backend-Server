@@ -132,24 +132,8 @@
                         }
                     }
 
-                    // cryto / sign / integrity
-
-                    sign(JSON.stringify({
-                        base64: base64,
-                        index: formData.get("blob_index"),
-                        name: formData.get("blob_name"),
-                        second: formData.get("blob_sec")
-                    }))
-                        .then((signature) => { // signature is a arraybuffer of the SubtleCrypto sign
-                            xhr.open("POST", "/upload/" + channelName, true);
-
-                            xhr.setRequestHeader("signature", ab2b64(signature));
-
-                            xhr.send(formData);
-                        })
-                        .catch(function (err) {
-                            console.error(err);
-                        });
+                    xhr.open("POST", "/upload/" + channelName, true);
+                    xhr.send(formData);
 
                     if (postIndex == 1) {
                         // post first block, then enable watch

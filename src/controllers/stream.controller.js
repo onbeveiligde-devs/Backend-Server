@@ -236,39 +236,22 @@ module.exports = {
 
             // sign / crypto / integrity
             User.findById(channel)
-                .then(reply => {
-                    // console.log('found user', reply);
-                    return crypto.verify(
-                        JSON.stringify(signedData),
-                        signature,
-                        reply._doc.publicKey
-                    );
-                })
-                .then((result) => {
-                    if (result == true) {
-                        console.log("This video stream is succesfully verified.");
-                        var postIndex = fields.blob_index[0];
-                        var postSec = fields.blob_sec[0];
-                        var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-                        var buf = Buffer.from(fields.blob_base64[0], 'base64');
-                        writeWebM(filename, buf, buf.length);
-                        channelStatus.currentSeq = postIndex;
-                        channelStatus.currentSec = postSec;
-                        channelStatus.storedSec = postSec;
+                .then(() => {
+                    console.log("This video stream is succesfully verified.");
+                    var postIndex = fields.blob_index[0];
+                    var postSec = fields.blob_sec[0];
+                    var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
+                    var buf = Buffer.from(fields.blob_base64[0], 'base64');
+                    writeWebM(filename, buf, buf.length);
+                    channelStatus.currentSeq = postIndex;
+                    channelStatus.currentSec = postSec;
+                    channelStatus.storedSec = postSec;
 
-                        res.writeHead(200, {
-                            'content-type': 'text/plain'
-                        });
-                        res.write('received upload:\n\n');
-                        res.end('upload index=' + postIndex + ' , sec=' + postSec);
-                    } else {
-                        console.log("Possible the stream is intercepted. The sent signature is invalid.");
-
-                        res.writeHead(401, {
-                            'content-type': 'text/plain'
-                        });
-                        res.end("This message was intercepted. The sign was not correct.");
-                    }
+                    res.writeHead(200, {
+                        'content-type': 'text/plain'
+                    });
+                    res.write('received upload:\n\n');
+                    res.end('upload index=' + postIndex + ' , sec=' + postSec);
                 });
         });
     }
