@@ -22,20 +22,29 @@ module.exports = {
     },
 
     allByUserId: function (req, res) {
-        Chat.find({ user: req.params.user })
-            .then(messages => {
-                res.send({
-                    "messages": messages
-                });
-            })
-            .catch(err => {
-                console.log('can not get a list of messages by user id. ', err);
-                res.status(200);
-                res.send(new Hal.Resource({
-                    message: 'can not get a list of messages by user id.',
-                    errors: err
-                }, req.url));
+        let u = req.params.user || null;
+        if (u == null) {
+            res.send({
+                "messages": []
             });
+        } else {
+            Chat.find({
+                    user: u
+                })
+                .then(messages => {
+                    res.send({
+                        "messages": messages
+                    });
+                })
+                .catch(err => {
+                    console.log('can not get a list of messages by user id. ', err);
+                    res.status(200);
+                    res.send(new Hal.Resource({
+                        message: 'can not get a list of messages by user id.',
+                        errors: err
+                    }, req.url));
+                });
+        }
     },
 
     create: function (req, res) {
@@ -43,7 +52,7 @@ module.exports = {
         // Check if user exists
         User.findById(req.params.user)
             .then(user => {
-                if(!user) {
+                if (!user) {
                     res.status(404).send(new Hal.Resource({
                         message: 'can not create chat.',
                         errors: err
@@ -57,7 +66,7 @@ module.exports = {
                 // Check if author exists
                 User.findById(req.body.author)
                     .then(author => {
-                        if(!author) {
+                        if (!author) {
                             res.status(404).send(new Hal.Resource({
                                 message: 'can not create chat.',
                                 errors: err
@@ -77,7 +86,8 @@ module.exports = {
                                     author: author._id,
                                     message: req.body.message,
                                     timestamp: new Date(req.body.timestamp * 1000),
-                                    sign: req.body.sign});
+                                    sign: req.body.sign
+                                });
                                 chat.save()
                                     .then(chat => {
                                         res.status(200).json(chat);
