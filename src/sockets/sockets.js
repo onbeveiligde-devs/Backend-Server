@@ -1,10 +1,11 @@
 const socketio = require('socket.io');
-const Chat = require('./models/db/Chat');
-const User = require('./models/db/User');
-const crypto = require('./models/crypto');
+const Chat = require('../models/db/Chat');
+const User = require('../models/db/User');
+const crypto = require('../models/crypto');
 
 module.exports = {
     start: function (app) {
+        console.log('listen to sockets...');
         const io = socketio(app); // setup stream socket
 
         // socket connection
