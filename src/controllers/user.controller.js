@@ -50,21 +50,42 @@ module.exports = {
     },
 
     login: function(req, res) {
+        console.log('login called');
         let sign = req.body.sign;
         let publicKey = req.body.publicKey;
         let command = req.body.command;
 
-        crypto.verify(command, sign, publicKey)
-            .then(success => {
-                res.status(success ? 200 : 400).json(new Hal.Resource({
-                    success: success
-                }))
+        // Check if the public key actually exists before verifying
+        User.find({
+            publicKey: publicKey
+        })
+            .then(list => {
+                if(list.length < 1) {
+                    res.status(404).json(new Hal.Resource({
+                        error: 'Unregistered public key'
+                    }));
+                    return;
+                }
+                // Public key exists in database
+                crypto.verify(command, sign, publicKey)
+                    .then(success => {
+                        res.status(success ? 200 : 400).json(new Hal.Resource({
+                            success: success,
+                            user: list[0]
+                        }))
+                    })
+                    .catch(error => {
+                        res.status(500).json(new Hal.Resource({
+                            success: false,
+                            error: error
+                        }))
+                    });
             })
-            .catch(error => {
+            .catch(err => {
+                console.error(err);
                 res.status(500).json(new Hal.Resource({
-                    success: false,
-                    error: error
-                }))
+                    error: err
+                }));
             });
     },
 
