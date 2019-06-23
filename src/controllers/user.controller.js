@@ -52,7 +52,7 @@ module.exports = {
     getByKey: function (req, res) {
         let key = req.body.key;
         console.log('try to get user by key. ', key);
-        User.find({
+        User.findOne({
                 publicKey: key
             }).then(reply => {
                 if (reply.MongooseError != undefined) {
