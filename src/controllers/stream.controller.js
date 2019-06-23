@@ -237,7 +237,7 @@ module.exports = {
             // sign / crypto / integrity
             User.findById(channel)
                 .then(reply => {
-                    console.log('found user', reply);
+                    // console.log('found user', reply);
                     return crypto.verify(
                         JSON.stringify(signedData),
                         signature,
