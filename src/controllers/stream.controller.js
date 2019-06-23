@@ -232,7 +232,7 @@ module.exports = {
                 name: fields["blob_name"][0],
                 second: fields["blob_sec"][0]
             };
-            console.log('signed user data', signedData);
+            // console.log('signed user data', signedData);
 
             // sign / crypto / integrity
             User.findById(channel)
