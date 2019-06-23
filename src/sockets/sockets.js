@@ -24,8 +24,36 @@ module.exports = {
                 typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
-                console.log('hi clients', data);
-                io.emit('ONLINE', data); // send to client
+                // Check if author exists
+                User.findById(data._id)
+                    .then(author => {
+                        if (!author) {
+                            console.log('author does not exists for ' + socket.handshake.address);
+                            io.emit('ERRTOCLIENT', {
+                                message: 'author does not exists for ' + socket.handshake.address,
+                                errors: 404
+                            }); // send to client
+                            return;
+                        }
+                        crypto.verify(data._id, data.sign, author.publicKey)
+                            .then(success => {
+                                console.log('hi clients', data);
+                                io.emit('ONLINE', data); // send to client
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                res.status(404).send({
+                                    message: 'Could not verify signature'
+                                });
+                                return;
+                            });
+                    }).catch(err => {
+                        io.emit('ERRTOCLIENT', {
+                            message: 'error for ' + socket.handshake.address,
+                            errors: err
+                        }); // send to client
+                        return;
+                    })
             } else {
                 console.log('hi undefined', data);
             }
@@ -40,8 +68,37 @@ module.exports = {
                 typeof (data._id) !== 'undefined' &&
                 typeof (data.sign) !== 'undefined'
             ) {
-                console.log('bye clients', data);
-                io.emit('OFFLINE', data); // send to client
+                // Check if author exists
+                User.findById(data._id)
+                    .then(author => {
+                        if (!author) {
+                            console.log('author does not exists for ' + socket.handshake.address);
+                            io.emit('ERRTOCLIENT', {
+                                message: 'author does not exists for ' + socket.handshake.address,
+                                errors: 404
+                            }); // send to client
+                            return;
+                        }
+                        crypto.verify(data._id, data.sign, author.publicKey)
+                            .then(success => {
+                                console.log('bye clients', data);
+                                io.emit('OFFLINE', data); // send to client
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                res.status(404).send({
+                                    message: 'Could not verify signature'
+                                });
+                                return;
+                            });
+                    }).catch(err => {
+                        io.emit('ERRTOCLIENT', {
+                            message: 'error for ' + socket.handshake.address,
+                            errors: err
+                        }); // send to client
+                        return;
+                    })
+
             } else {
                 console.log('bye undefined');
             }
@@ -91,36 +148,35 @@ module.exports = {
                                 console.log(author);
                                 crypto.verify(data.message + '-' + data.timestamp, data.sign, author.publicKey)
                                     .then(success => {
-                                            console.log('message verified = ' + success);
+                                        console.log('message verified = ' + success);
 
-                                let chat = new Chat({
-                                    user: user._id,
-                                    author: author._id,
-                                    message: data.message,
-                                    timestamp: new Date(data.timestamp * 1000),
-                                    sign: data.sign
-                                });
-                                chat.save()
-                                    .then(chat => {
-                                        console.log('message saved from ' + socket.handshake.address + '. Try to load it...');
-                                        io.emit('MSGTOCLIENT', chat); // send to client
-                                        console.log('message loaded and send to ' + socket.handshake.address);
-                                    }).catch(err => {
-                                        console.log('can not create chat for ' + socket.handshake.address, err);
-                                        io.emit('ERRTOCLIENT', {
-                                            message: 'can not create chat for ' + socket.handshake.address,
-                                            errors: err
-                                        }); // send to client
+                                        let chat = new Chat({
+                                            user: user._id,
+                                            author: author._id,
+                                            message: data.message,
+                                            timestamp: new Date(data.timestamp * 1000),
+                                            sign: data.sign
+                                        });
+                                        chat.save()
+                                            .then(chat => {
+                                                console.log('message saved from ' + socket.handshake.address + '. Try to load it...');
+                                                io.emit('MSGTOCLIENT', chat); // send to client
+                                                console.log('message loaded and send to ' + socket.handshake.address);
+                                            }).catch(err => {
+                                                console.log('can not create chat for ' + socket.handshake.address, err);
+                                                io.emit('ERRTOCLIENT', {
+                                                    message: 'can not create chat for ' + socket.handshake.address,
+                                                    errors: err
+                                                }); // send to client
+                                            })
                                     })
-                                })
-                                .catch(err => {
-                                    console.log(err);
-                                    res.status(404).send(new Hal.Resource({
-                                        message: 'can not create chat.',
-                                        errors: 'Could not verify signature'
-                                    }, req.url));
-                                    return;
-                                });
+                                    .catch(err => {
+                                        console.log(err);
+                                        res.status(404).send({
+                                            message: 'Could not verify signature'
+                                        });
+                                        return;
+                                    });
                             })
                             .catch(err => {
                                 console.log('can not create chat for ' + socket.handshake.address, err);
