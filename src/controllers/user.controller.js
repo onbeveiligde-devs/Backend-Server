@@ -9,18 +9,9 @@ module.exports = {
 
         User.find()
             .then(users => {
-                let resource = new Hal.Resource({
+                res.send({
                     "users": users
-                }, req.url);
-
-                users.forEach(user => {
-                    let str = req.url;
-                    if (str.substr(-1) != '/') str += '/';
-                    str += user._id;
-                    resource.link(user._id, str);
                 });
-
-                res.send(resource);
             })
             .catch(err => {
                 console.log('can not get a list of users. ', err);

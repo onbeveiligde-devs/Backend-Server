@@ -7,18 +7,9 @@ module.exports = {
 
         Log.find()
             .then(logs => {
-                let resource = new Hal.Resource({
+                res.send({
                     "logs": logs
-                }, req.url);
-
-                logs.forEach(log => {
-                    let str = req.url;
-                    if (str.substr(-1) != '/') str += '/';
-                    str += log._id;
-                    resource.link(log._id, str);
                 });
-
-                res.send(resource);
             })
             .catch(err => {
                 console.log('can not get a list of logs. ', err);

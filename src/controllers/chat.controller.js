@@ -7,18 +7,9 @@ module.exports = {
     list: function (req, res) {
         Chat.find()
             .then(messages => {
-                let resource = new Hal.Resource({
+                res.send({
                     "messages": messages
-                }, req.url);
-
-                messages.forEach(chat => {
-                    let str = req.url;
-                    if (str.substr(-1) != '/') str += '/';
-                    str += chat._id;
-                    resource.link(chat._id, str);
                 });
-
-                res.send(resource);
             })
             .catch(err => {
                 console.log('can not get a list of messages. ', err);
