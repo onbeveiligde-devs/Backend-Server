@@ -49,6 +49,27 @@ module.exports = {
             });
     },
 
+    getByKey: function (req, res) {
+        console.log('try to get user by key. ', req.body.publicKey);
+        User.findOne({
+                publicKey: req.body.publicKey
+            }).then(reply => {
+                console.log('user with key found. ', reply);
+                res.send({
+                    user: reply,
+                    success: reply != null
+                });
+            })
+            .catch(err => {
+                console.log('can not get user. ', err);
+                res.status(404);
+                res.send(new Hal.Resource({
+                    message: 'can not get user.',
+                    errors: err
+                }, req.url));
+            });
+    },
+
     login: function(req, res) {
         console.log('login called');
         let sign = req.body.sign;
