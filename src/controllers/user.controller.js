@@ -55,11 +55,14 @@ module.exports = {
         User.find({
                 publicKey: key
             }).then(reply => {
-                res.send(new Hal.Resource(reply._doc, req.url));
+                res.send({
+                    user: reply._doc, 
+                    success: (reply._doc != undefined && reply._doc != null ? true : false)
+                });
             })
             .catch(err => {
                 console.log('can not get user. ', err);
-                res.status(200);
+                res.status(404);
                 res.send(new Hal.Resource({
                     message: 'can not get user.',
                     errors: err
