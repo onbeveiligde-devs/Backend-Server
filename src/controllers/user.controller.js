@@ -50,15 +50,31 @@ module.exports = {
     },
 
     getByKey: function (req, res) {
-        let key = req.body.key || req.params.key;
-        console.log('try to get user by key. ', [key, req.params]);
+        let key = req.body.key;
+        console.log('try to get user by key. ', key);
         User.find({
                 publicKey: key
             }).then(reply => {
-                res.send({
-                    user: reply._doc,
-                    success: (reply._doc != undefined && reply._doc != null ? true : false)
-                });
+                if (reply.MongooseError != undefined) {
+                    console.log('user with key found error. ', reply.MongooseError);
+                    res.send({
+                        error: reply.MongooseError,
+                        success: false
+                    });
+                } else if (reply._doc != undefined) {
+                    console.log('user with key found doc. ', reply._doc);
+                    res.send({
+                        user: reply._doc,
+                        success: true
+                    });
+                } else {
+                    console.log('can not get user unknown error. ', err);
+                    res.status(500);
+                    res.send(new Hal.Resource({
+                        message: 'can not get user.',
+                        errors: err
+                    }, req.url));
+                }
             })
             .catch(err => {
                 console.log('can not get user. ', err);
