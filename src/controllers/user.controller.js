@@ -49,7 +49,25 @@ module.exports = {
             });
     },
 
-    login: function(req, res) {
+    getByKey: function (req, res) {
+        let key = req.params.publicKey || null;
+        console.log('try to get user by key. ', [key, req.params]);
+        User.find({
+                publicKey: key
+            }).then(reply => {
+                res.send(new Hal.Resource(reply._doc, req.url));
+            })
+            .catch(err => {
+                console.log('can not get user. ', err);
+                res.status(200);
+                res.send(new Hal.Resource({
+                    message: 'can not get user.',
+                    errors: err
+                }, req.url));
+            });
+    },
+
+    login: function (req, res) {
         let sign = req.body.sign;
         let publicKey = req.body.publicKey;
         let command = req.body.command;
@@ -68,13 +86,19 @@ module.exports = {
             });
     },
 
-    register: async function(req, res) {
+    register: async function (req, res) {
         let publicKey = req.body.publicKey;
         let name = req.body.name;
         let signature = req.body.sign;
 
-        let usersWithThatPublicKey = await User.find({$or: [{ publicKey: publicKey }, { name: name }]});
-        if(usersWithThatPublicKey && usersWithThatPublicKey.length) {
+        let usersWithThatPublicKey = await User.find({
+            $or: [{
+                publicKey: publicKey
+            }, {
+                name: name
+            }]
+        });
+        if (usersWithThatPublicKey && usersWithThatPublicKey.length) {
             // public key or name taken
             res.status(400).json(new Hal.Resource({
                 error: 'Public key or name not unique'
@@ -85,7 +109,7 @@ module.exports = {
         crypto.verify(name, signature, publicKey)
             .then(success => {
                 console.log('verified name hash = ' + success);
-                if(!success) {
+                if (!success) {
                     res.status(400).json(new Hal.Resource({
                         error: 'Invalid signature'
                     }));
