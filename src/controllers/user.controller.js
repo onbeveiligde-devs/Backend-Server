@@ -68,11 +68,11 @@ module.exports = {
                         success: true
                     });
                 } else {
-                    console.log('can not get user unknown error. ', err);
+                    console.log('can not get user unknown error. ', reply);
                     res.status(500);
                     res.send(new Hal.Resource({
                         message: 'can not get user.',
-                        errors: err
+                        errors: reply
                     }, req.url));
                 }
             })
