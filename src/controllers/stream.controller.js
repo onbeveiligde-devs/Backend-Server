@@ -17,6 +17,7 @@ class ChannelStatus {
         this.isOnAir = false;
         this.currentSeq = 0;
         this.storedSec = 0;
+        this.lastChunk = Date.now();
         this.filePrefix = '';
         this.watchers = [];
     }
@@ -35,10 +36,26 @@ class ChannelStatus {
         return this.currentSecValue;
     }
 }
-var channels = {}; // channel status has
+let channels = {}; // channel status has
 
 const port = process.env.PORT || 8000;
 const serverURL = 'localhost:' + port;
+
+setInterval(function() {
+    console.log('Checking all channels on last chunk');
+    for(key in channels) {
+        if(channels.hasOwnProperty(key)) {
+            let channel = channels[key];
+            console.log('Checking ' + channel.name);
+            if(Date.now() > (channel.lastChunk + 15000)) {
+                console.log('User is NOT live anymore, last chunk was ' + (Date.now() - channel.lastChunk) + 'ms ago');
+                channel.isOnAir = false;
+            } else {
+                console.log('User is still live, last chunk was ' + (Date.now() - channel.lastChunk) + 'ms ago');
+            }
+        }
+    }
+}, 5000);
 
 function startChannel(name) {
     var channelStatus = channels[name];
@@ -102,15 +119,6 @@ module.exports = {
             streams: []
         };
         for (key in channels) {
-            /*
-        this.name = '';
-        this.uuid = '';
-        this.dir = '';
-        this.isOnAir = false;
-        this.currentSeq = 0;
-        this.storedSec = 0;
-        this.filePrefix = '';
-        this.watchers = [];*/
             if (channels.hasOwnProperty(key)) {
                 let channel = channels[key];
                 responseObj.streams.push({
@@ -202,13 +210,15 @@ module.exports = {
         });
     },
     upload: (req, res) => {
+        console.log('uploaded video chunk');
         var channel = req.params.channel;
         var channelStatus = getChannelStatus(channel);
         if (!channelStatus) {
             channelStatus = startChannel(channel);
         }
 
-        channel.isOnAir = true;
+        channelStatus.isOnAir = true;
+        channelStatus.lastChunk = Date.now();
         const signature = req.headers["signature"];
 
         var form = new multiparty.Form({
@@ -252,6 +262,7 @@ module.exports = {
                     });
                     res.write('received upload:\n\n');
                     res.end('upload index=' + postIndex + ' , sec=' + postSec);
+                    console.log()
                 });
         });
     }

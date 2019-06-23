@@ -2,6 +2,7 @@ const User = require('../models/db/User');
 const Hal = require('hal');
 const Log = require('../models/Log');
 const crypto = require('../models/crypto');
+const mongoose = require('mongoose');
 
 module.exports = {
     list: function (req, res) {
@@ -26,18 +27,39 @@ module.exports = {
     get: function (req, res) {
         console.log('try to get user. ', req.params);
 
-        User.findById(req.params.id)
-            .then(reply => {
-                res.send(reply._doc);
+        if(req.params.id && mongoose.Types.ObjectId.isValid(req.params.id)) {
+            User.findById(req.params.id)
+                .then(reply => {
+                    res.send(reply._doc);
+                })
+                .catch(err => {
+                    console.log('can not get user. ', err);
+                    res.status(404).send(new Hal.Resource({
+                        message: 'User can not be found',
+                        errors: err
+                    }, req.url));
+                });
+            return;
+        }
+
+        User.findOne({ publicKey: req.params.id })
+            .then(user => {
+                if(!user) {
+                    res.status(404).json(new Hal.Resource({
+                        message: 'User can not be found',
+                        errors: err
+                    }, req.url));
+                    return;
+                }
+                res.status(200).json(user);
             })
             .catch(err => {
-                console.log('can not get user. ', err);
-                res.status(200);
-                res.send(new Hal.Resource({
-                    message: 'can not get user.',
+                res.status(400).json(new Hal.Resource({
+                    message: 'User can not be found',
                     errors: err
                 }, req.url));
             });
+
     },
 
     getByKey: function (req, res) {
