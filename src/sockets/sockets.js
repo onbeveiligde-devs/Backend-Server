@@ -87,11 +87,11 @@ module.exports = {
                                 }
 
                                 // Check HASH in format "message-timestamp"
-                                // console.log(data.message + '-' + data.timestamp);
-                                // console.log(author);
-                                // crypto.verify(data.message + '-' + data.timestamp, data.sign, author.publicKey)
-                                //     .then(success => {
-                                //         console.log('message verified = ' + success);
+                                console.log(data.message + '-' + data.timestamp);
+                                console.log(author);
+                                crypto.verify(data.message + '-' + data.timestamp, data.sign, author.publicKey)
+                                    .then(success => {
+                                            console.log('message verified = ' + success);
 
                                 let chat = new Chat({
                                     user: user._id,
@@ -112,16 +112,15 @@ module.exports = {
                                             errors: err
                                         }); // send to client
                                     })
-                                // })
-                                // .catch(err => {
-                                //     console.log(err);
-                                //     console.log('can not create chat for ' + socket.handshake.address, err);
-                                //     io.emit('ERRTOCLIENT', {
-                                //         message: 'Could not verify signature for ' + socket.handshake.address,
-                                //         errors: err
-                                //     }); // send to client
-                                //     return;
-                                // });
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(404).send(new Hal.Resource({
+                                        message: 'can not create chat.',
+                                        errors: 'Could not verify signature'
+                                    }, req.url));
+                                    return;
+                                });
                             })
                             .catch(err => {
                                 console.log('can not create chat for ' + socket.handshake.address, err);
