@@ -6,33 +6,8 @@ require('dotenv').config({path: '.env'});
 const User = require('../models/db/User');
 const crypto = require('../models/crypto');
 const util = require('util');
+const ChannelStatus = require('../stream/ChannelStatus');
 
-class ChannelStatus {
-    constructor() {
-        this.name = '';
-        this.uuid = '';
-        this.dir = '';
-        this.isOnAir = false;
-        this.currentSeq = 0;
-        this.storedSec = 0;
-        this.filePrefix = '';
-        this.watchers = [];
-    }
-
-    set currentSec(val) {
-        this.currentSecValue = val;
-        this.watchers.forEach((watcher) => {
-            console.log("Trying to stream: " + this.currentSecValue);
-            if (watcher.ready) {
-                streamFile(watcher.response, this.filePrefix + '_' + this.currentSecValue + '.webm', watcher);
-            }
-        });
-    }
-
-    get currentSec() {
-        return this.currentSecValue;
-    }
-}
 var channels = {}; // channel status has
 
 const port = process.env.PORT || 8000;
@@ -152,14 +127,14 @@ module.exports = {
         var channel = req.params.channel;
         console.log('get /stream/' + channel);
         var channelStatus = getChannelStatus(channel);
-        if (!channelStatus) {
-            console.error('ERROR. channel:' + channel + ' not onAir');
-            res.writeHead(404, {
-                'content-type': 'text/plain'
-            });
-            res.end('not found');
-            return;
-        }
+        // if (!channelStatus) {
+        //     console.error('ERROR. channel:' + channel + ' not onAir');
+        //     res.writeHead(404, {
+        //         'content-type': 'text/plain'
+        //     });
+        //     res.end('not found');
+        //     return;
+        // }
 
         res.writeHead(200, {
             'Content-Type': 'video/webm',
@@ -189,7 +164,7 @@ module.exports = {
     },
     goLife: (req, res) => {
         var channel = req.params.channel;
-        var channelStatus = startChannel(channel);
+        var channelStatus = startChannel(channel, channels);
         if (!channelStatus) {
             console.error('ERROR. channel:' + channel + ' already onAir');
         }
@@ -201,14 +176,14 @@ module.exports = {
     },
     upload: (req, res) => {
         var channel = req.params.channel;
-        var channelStatus = getChannelStatus(channel);
-        if (!channelStatus) {
-            res.writeHead(500, {
-                'content-type': 'text/plain'
-            });
-            res.end('Server Error');
-            return;
-        }
+        // var channelStatus = getChannelStatus(channel);
+        // if (!channelStatus) {
+        //     res.writeHead(500, {
+        //         'content-type': 'text/plain'
+        //     });
+        //     res.end('Server Error');
+        //     return;
+        // }
 
         channel.isOnAir = true;
         const signature = req.headers["signature"];
