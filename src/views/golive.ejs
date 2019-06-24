@@ -72,12 +72,11 @@
                 formData.append("blob_name", "video_" + postIndex + ".webm");
                 formData.append("blob_index", postIndex);
                 formData.append("blob_sec", postSec);
-
+                
                 let sign = await window.transCrypto.sign(base64 + "video_" + postIndex + ".webm" + postIndex + postSec, '{{privateKey}}');
                 console.log('sign = ' + sign);
 
                 formData.append("blob_sign", postSec);
-
                 var xhr = new XMLHttpRequest();
 
                 xhr.onreadystatechange = function () {

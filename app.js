@@ -22,7 +22,9 @@ app.use(bodyParser.json({ // tell app to use json body parser
 // app.use(cookieParser());
 app.use(cross()); // Allow Cross Domain Requests
 
-app.use('/crypto', express.static(path.join(__dirname, 'src/models/crypto.js')));
+app.set('view engine', 'ejs');
+app.set('views', __dirname + '/src/views');
+app.use('/crypto.js', express.static(path.join(__dirname, 'src/models/crypto.js')));
 
 // endpoints
 const streamRoutes = require('./src/routes/stream.routes');
