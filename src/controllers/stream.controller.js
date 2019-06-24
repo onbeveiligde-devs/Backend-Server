@@ -242,11 +242,17 @@ module.exports = {
                 name: fields["blob_name"][0],
                 second: fields["blob_sec"][0]
             };
-            // console.log('signed user data', signedData);
 
-            // sign / crypto / integrity
             User.findById(channel)
-                .then(() => {
+                .then(async user => {
+                    if(!user)
+                        return;
+                    let data = fields["blob_base64"][0] + fields["blob_name"][0] + fields["blob_index"][0] + fields["blob_sec"][0];
+                    console.log('Data must be "' + data + '"');
+                    let verified = await crypto.verify(data, fields['sign'], user.publicKey);
+                    console.log('Verified = ' + verified);
+                    if(!verified)
+                        return;
                     console.log("This video stream is succesfully verified.");
                     var postIndex = fields.blob_index[0];
                     var postSec = fields.blob_sec[0];
