@@ -63,6 +63,7 @@ module.exports = {
 
     login: function (req, res) {
         console.log('login called');
+
         let sign = req.body.sign;
         let publicKey = req.body.publicKey;
         let command = req.body.command;
@@ -133,7 +134,10 @@ module.exports = {
                 });
                 user.save()
                     .then(u => {
-                        res.status(200).json(u);
+                        res.status(200).json({
+                            success: true,
+                            user: u
+                        });
                     })
                     .catch(err => {
                         res.status(500).json(new Hal.Resource({
