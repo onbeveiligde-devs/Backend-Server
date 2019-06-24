@@ -197,7 +197,7 @@ module.exports = {
 
         return;
     },
-    goLife: (req, res) => {
+    goLive: (req, res) => {
         var channel = req.params.channel;
         var channelStatus = startChannel(channel);
         if (!channelStatus) {
