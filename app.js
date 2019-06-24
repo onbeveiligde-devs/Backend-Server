@@ -22,9 +22,6 @@ app.use(bodyParser.json({ // tell app to use json body parser
 // app.use(cookieParser());
 app.use(cross()); // Allow Cross Domain Requests
 
-app.set('view engine', 'ejs');
-app.set('views', __dirname + '/src/views');
-app.use(express.static(path.join(__dirname, 'src/public')));
 app.use('/crypto', express.static(path.join(__dirname, 'src/models/crypto.js')));
 
 // endpoints
@@ -33,10 +30,8 @@ const streamRoutes = require('./src/routes/stream.routes');
 const defaultRoutes = require('./src/routes/default.routes');
 const userRoutes = require('./src/routes/user.routes');
 const chatRoutes = require('./src/routes/chat.routes');
-const logRoutes = require('./src/routes/log.routes');
 
 streamRoutes(app);
-logRoutes(app);
 chatRoutes(app);
 userRoutes(app);
 defaultRoutes(app);
