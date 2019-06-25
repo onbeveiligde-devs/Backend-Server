@@ -248,8 +248,9 @@ module.exports = {
                     if(!user)
                         return;
                     let data = fields["blob_base64"][0] + fields["blob_name"][0] + fields["blob_index"][0] + fields["blob_sec"][0];
-                    console.log('Data must be "' + data + '"');
-                    let verified = await crypto.verify(data, fields['sign'], user.publicKey);
+                    let sign = fields['blob_sign'][0];
+                    console.log(sign);
+                    let verified = await crypto.verify(data, sign, user.publicKey);
                     console.log('Verified = ' + verified);
                     if(!verified)
                         return;
