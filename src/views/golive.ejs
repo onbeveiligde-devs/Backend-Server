@@ -8,188 +8,125 @@
 </head>
 
 <body>
-    <h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
-    <button id="start_button" onclick="startVideo()">Start Video</button>
-    <button id="start_record_button" onclick="startRecording();">Start Live</button>
-    <button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
-    <button id="stop_button" onclick="stopVideo()">Stop Video</button>
+<h2>GO WebM Live Streaming with Firefox: <%= channel %></h2>
+<button id="start_button" onclick="startVideo()">Start Video</button>
+<button id="start_record_button" onclick="startRecording();">Start Live</button>
+<button id="stop_record_button" onclick="stopRecording()">Stop Live</button>
+<button id="stop_button" onclick="stopVideo()">Stop Video</button>
 
-    <!--
+<!--
 <button id="play_button" onclick="playRecorded()">Play</button>
 <a href="#" id="downloadlink" class="download">Download</a>
 -->
 
-    <br />
-    <video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
-    <!--
+<br />
+<video id="local_video" autoplay="1" style="max-width: 100%; border: 1px solid;"></video>
+<!--
 <video id="playback_video" width="320px" height="240px" autoplay="1" style="border: 1px solid;"></video>
 -->
-    <div id="watch_link"></div>
+<div id="watch_link"></div>
 
-    <script type="text/javascript" src="../crypto.js"></script>
+<script type="text/javascript" src="../crypto.js"></script>
 
-    <script>
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-        window.RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-        window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+<script>
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    window.RTCPeerConnection = window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+    window.RTCIceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
 
-        var channelName = '<%= channel %>';
-        var localVideo = document.getElementById('local_video');
-        //var playbackVideo =  document.getElementById('playback_video');
-        //var ancher = document.getElementById('downloadlink');
-        var watchDiv = document.getElementById('watch_link');
-        var localStream = null;
-        var recorder = null;
-        var blobUrl = null;
-        var blobUrls = [];
-        var recordIndex = 0;
-        var postIndex = 0;
-        var postSec = 0;
-        var intervalSec = 5;
-        var intervalMiliSec = intervalSec * 1000;
+    var channelName = '<%= channel %>';
+    var localVideo = document.getElementById('local_video');
+    //var playbackVideo =  document.getElementById('playback_video');
+    //var ancher = document.getElementById('downloadlink');
+    var watchDiv = document.getElementById('watch_link');
+    var localStream = null;
+    var recorder = null;
+    var blobUrl = null;
+    var blobUrls = [];
+    var recordIndex = 0;
+    var postIndex = 0;
+    var postSec = 0;
+    var intervalSec = 5;
+    var intervalMiliSec = intervalSec * 1000;
 
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-        let lookup = new Uint8Array(256);
-
-        function ab2b64(arraybuffer) {
-            var bytes = new Uint8Array(arraybuffer),
-                i, len = bytes.length, base64 = '';
-
-            for (i = 0; i < len; i += 3) {
-                base64 += chars[bytes[i] >> 2];
-                base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
-                base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
-                base64 += chars[bytes[i + 2] & 63];
-            }
-
-            if ((len % 3) === 2) {
-                base64 = base64.substring(0, base64.length - 1) + '=';
-            } else if (len % 3 === 1) {
-                base64 = base64.substring(0, base64.length - 2) + '==';
-            }
-
-            return base64;
+    function startRecording() {
+        if (!localStream) {
+            console.error("no stream");
+            return;
+        }
+        if (recorder) {
+            console.warn("recorder already exist. reuse it.");
+        }
+        else {
+            recorder = new MediaRecorder(localStream);
         }
 
-        function b642ab(base64) {
-            var bufferLength = base64.length * 0.75,
-                len = base64.length, i, p = 0,
-                encoded1, encoded2, encoded3, encoded4;
+        recorder.ondataavailable = function (evt) {
+            var videoBlob = new Blob([evt.data], { type: evt.data.type });
 
-            if (base64[base64.length - 1] === '=') {
-                bufferLength--;
-                if (base64[base64.length - 2] === '=') {
-                    bufferLength--;
-                }
-            }
+            blobToBase64(videoBlob, async function (base64) {
 
-            var arraybuffer = new ArrayBuffer(bufferLength),
-                bytes = new Uint8Array(arraybuffer);
+                // --- post to server ---
+                postSec = postIndex * intervalSec;
+                var formData = new FormData();
+                formData.append("blob_base64", base64);
+                formData.append("blob_name", "video_" + postIndex + ".webm");
+                formData.append("blob_index", postIndex);
+                formData.append("blob_sec", postSec);
+                
+                let sign = await window.transCrypto.sign(base64 + "video_" + postIndex + ".webm" + postIndex + postSec, '{{privateKey}}');
+                console.log('sign = ' + sign);
 
-            for (i = 0; i < len; i += 4) {
-                encoded1 = lookup[base64.charCodeAt(i)];
-                encoded2 = lookup[base64.charCodeAt(i + 1)];
-                encoded3 = lookup[base64.charCodeAt(i + 2)];
-                encoded4 = lookup[base64.charCodeAt(i + 3)];
+                formData.append("blob_sign", postSec);
+                var xhr = new XMLHttpRequest();
 
-                bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-                bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-                bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
-            }
-
-            return arraybuffer;
-        }
-
-        function startRecording() {
-            if (!localStream) {
-                console.error("no stream");
-                return;
-            }
-            if (recorder) {
-                console.warn("recorder already exist. reuse it.");
-            }
-            else {
-                recorder = new MediaRecorder(localStream);
-            }
-
-            recorder.ondataavailable = function (evt) {
-                var videoBlob = new Blob([evt.data], { type: evt.data.type });
-
-                blobToBase64(videoBlob, function (base64) {
-
-                    // --- post to server ---
-                    postSec = postIndex * intervalSec;
-                    var formData = new FormData();
-                    formData.append("blob_base64", base64);
-                    formData.append("blob_name", "video_" + postIndex + ".webm");
-                    formData.append("blob_index", postIndex);
-                    formData.append("blob_sec", postSec);
-                    var xhr = new XMLHttpRequest();
-
-                    xhr.onreadystatechange = function () {
-                        if ((xhr.readyState == 4) && (xhr.status == 200)) {
-                            console.log("xhr finish. response= " + xhr.responseText);
-                        }
+                xhr.onreadystatechange = function () {
+                    if ((xhr.readyState == 4) && (xhr.status == 200)) {
+                        console.log("xhr finish. response= " + xhr.responseText);
                     }
-
-                    // cryto / sign / integrity
-
-                    sign(JSON.stringify({
-                        base64: base64,
-                        index: formData.get("blob_index"),
-                        name: formData.get("blob_name"),
-                        second: formData.get("blob_sec")
-                    }))
-                        .then((signature) => { // signature is a arraybuffer of the SubtleCrypto sign
-                            xhr.open("POST", "/upload/" + channelName, true);
-
-                            xhr.setRequestHeader("signature", ab2b64(signature));
-
-                            xhr.send(formData);
-                        })
-                        .catch(function (err) {
-                            console.error(err);
-                        });
-
-                    if (postIndex == 1) {
-                        // post first block, then enable watch
-                        watchDiv.innerHTML = '<a target="_blank" href="/watch/' + channelName + '">watch streaming</a>&nbsp;';
-                    }
-                    postIndex++;
-                });
-            }
-
-            recorder.start(intervalMiliSec);
-            console.log("start recording");
-        }
-
-        function stopRecording() {
-            if (recorder) {
-                recorder.stop();
-                console.log("stop recording");
-            }
-        }
-
-        function blobToBase64(blob, callback) {
-            var reader = new FileReader();
-            reader.onload = function () {
-                var dataUrl = reader.result;
-                var base64 = dataUrl.split(',')[2];
-
-                if (base64 == null) {
-                    base64 = dataUrl.split(',')[1];
                 }
 
-                callback(base64);
-            };
-            reader.readAsDataURL(blob);
+                xhr.open("POST", "/upload/" + channelName, true);
+                xhr.send(formData);
+
+                if (postIndex == 1) {
+                    // post first block, then enable watch
+                    watchDiv.innerHTML = '<a target="_blank" href="/watch/' + channelName + '">watch streaming</a>&nbsp;';
+                }
+                postIndex++;
+            });
         }
 
-        // Request the usermedia
-        function startVideo() {
+        recorder.start(intervalMiliSec);
+        console.log("start recording");
+    }
 
-            navigator.mediaDevices.getUserMedia({
-                video:
+    function stopRecording() {
+        if (recorder) {
+            recorder.stop();
+            console.log("stop recording");
+        }
+    }
+
+    function blobToBase64(blob, callback) {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var dataUrl = reader.result;
+            var base64 = dataUrl.split(',')[2];
+
+            if (base64 == null) {
+                base64 = dataUrl.split(',')[1];
+            }
+
+            callback(base64);
+        };
+        reader.readAsDataURL(blob);
+    }
+
+    // Request the usermedia
+    function startVideo() {
+
+        navigator.mediaDevices.getUserMedia({
+            video:
                 {
                     optional: [
                         { minWidth: 320 },
@@ -200,38 +137,25 @@
                         { minWidth: 2560 },
                     ]
                 },
-                audio: true
-            }).then((stream) => {
-                localStream = stream;
-                localVideo.srcObject = stream;
-                localVideo.volume = 0;
-            });
+            audio: true
+        }).then((stream) => {
+            localStream = stream;
+            localVideo.srcObject = stream;
+            localVideo.volume = 0;
+        });
+    }
+
+    function stopVideo() {
+        if (localStream) {
+            localVideo.pause();
+            localVideo.srcDoc = "";
+
+            localStream.stop();
+            localStream = null;
         }
+    }
 
-        function stopVideo() {
-            if (localStream) {
-                localVideo.pause();
-                localVideo.srcDoc = "";
-
-                localStream.stop();
-                localStream = null;
-            }
-        }
-
-        function ab2str(buf) { // arrayBuffer to string
-            return String.fromCharCode.apply(null, new Uint16Array(buf));
-        }
-
-        function str2ab(str) { // string to array buffer
-            var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-            var bufView = new Uint16Array(buf);
-            for (var i = 0, strLen = str.length; i < strLen; i++) {
-                bufView[i] = str.charCodeAt(i);
-            }
-            return buf;
-        }
-
-    </script>
+</script>
 </body>
 
 </html>

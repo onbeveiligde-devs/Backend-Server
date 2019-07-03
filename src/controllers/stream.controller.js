@@ -17,6 +17,7 @@ class ChannelStatus {
         this.isOnAir = false;
         this.currentSeq = 0;
         this.storedSec = 0;
+        this.lastChunk = Date.now();
         this.filePrefix = '';
         this.watchers = [];
     }
@@ -35,10 +36,26 @@ class ChannelStatus {
         return this.currentSecValue;
     }
 }
-var channels = {}; // channel status has
+let channels = {}; // channel status has
 
 const port = process.env.PORT || 8000;
 const serverURL = 'localhost:' + port;
+
+setInterval(function() {
+    console.log('Checking all channels on last chunk');
+    for(key in channels) {
+        if(channels.hasOwnProperty(key)) {
+            let channel = channels[key];
+            console.log('Checking ' + channel.name);
+            if(Date.now() > (channel.lastChunk + 15000)) {
+                console.log('User is NOT live anymore, last chunk was ' + (Date.now() - channel.lastChunk) + 'ms ago');
+                channel.isOnAir = false;
+            } else {
+                console.log('User is still live, last chunk was ' + (Date.now() - channel.lastChunk) + 'ms ago');
+            }
+        }
+    }
+}, 5000);
 
 function startChannel(name) {
     var channelStatus = channels[name];
@@ -102,15 +119,6 @@ module.exports = {
             streams: []
         };
         for (key in channels) {
-            /*
-        this.name = '';
-        this.uuid = '';
-        this.dir = '';
-        this.isOnAir = false;
-        this.currentSeq = 0;
-        this.storedSec = 0;
-        this.filePrefix = '';
-        this.watchers = [];*/
             if (channels.hasOwnProperty(key)) {
                 let channel = channels[key];
                 responseObj.streams.push({
@@ -189,7 +197,7 @@ module.exports = {
 
         return;
     },
-    goLife: (req, res) => {
+    goLive: (req, res) => {
         var channel = req.params.channel;
         var channelStatus = startChannel(channel);
         if (!channelStatus) {
@@ -202,13 +210,15 @@ module.exports = {
         });
     },
     upload: (req, res) => {
+        console.log('uploaded video chunk');
         var channel = req.params.channel;
         var channelStatus = getChannelStatus(channel);
         if (!channelStatus) {
             channelStatus = startChannel(channel);
         }
 
-        channel.isOnAir = true;
+        channelStatus.isOnAir = true;
+        channelStatus.lastChunk = Date.now();
         const signature = req.headers["signature"];
 
         var form = new multiparty.Form({
@@ -232,43 +242,34 @@ module.exports = {
                 name: fields["blob_name"][0],
                 second: fields["blob_sec"][0]
             };
-            // console.log('signed user data', signedData);
 
-            // sign / crypto / integrity
             User.findById(channel)
-                .then(reply => {
-                    // console.log('found user', reply);
-                    return crypto.verify(
-                        JSON.stringify(signedData),
-                        signature,
-                        reply._doc.publicKey
-                    );
-                })
-                .then((result) => {
-                    if (result == true) {
-                        console.log("This video stream is succesfully verified.");
-                        var postIndex = fields.blob_index[0];
-                        var postSec = fields.blob_sec[0];
-                        var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
-                        var buf = Buffer.from(fields.blob_base64[0], 'base64');
-                        writeWebM(filename, buf, buf.length);
-                        channelStatus.currentSeq = postIndex;
-                        channelStatus.currentSec = postSec;
-                        channelStatus.storedSec = postSec;
+                .then(async user => {
+                    if(!user)
+                        return;
+                    let data = fields["blob_base64"][0] + fields["blob_name"][0] + fields["blob_index"][0] + fields["blob_sec"][0];
+                    let sign = fields['blob_sign'][0];
+                    console.log(sign);
+                    let verified = await crypto.verify(data, sign, user.publicKey);
+                    console.log('Verified = ' + verified);
+                    if(!verified)
+                        return;
+                    console.log("This video stream is succesfully verified.");
+                    var postIndex = fields.blob_index[0];
+                    var postSec = fields.blob_sec[0];
+                    var filename = channelStatus.filePrefix + '_' + postSec + '.webm';
+                    var buf = Buffer.from(fields.blob_base64[0], 'base64');
+                    writeWebM(filename, buf, buf.length);
+                    channelStatus.currentSeq = postIndex;
+                    channelStatus.currentSec = postSec;
+                    channelStatus.storedSec = postSec;
 
-                        res.writeHead(200, {
-                            'content-type': 'text/plain'
-                        });
-                        res.write('received upload:\n\n');
-                        res.end('upload index=' + postIndex + ' , sec=' + postSec);
-                    } else {
-                        console.log("Possible the stream is intercepted. The sent signature is invalid.");
-
-                        res.writeHead(401, {
-                            'content-type': 'text/plain'
-                        });
-                        res.end("This message was intercepted. The sign was not correct.");
-                    }
+                    res.writeHead(200, {
+                        'content-type': 'text/plain'
+                    });
+                    res.write('received upload:\n\n');
+                    res.end('upload index=' + postIndex + ' , sec=' + postSec);
+                    console.log()
                 });
         });
     }

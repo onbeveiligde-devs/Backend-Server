@@ -1,6 +1,13 @@
-const WebCrypto = require("@trust/webcrypto"); // BROWSER VERSION -> const WebCrypto = window.crypto.subtle;
-const atob = require('atob'); // Remove if on browser
-const btoa = require('btoa'); // Remove if on browser
+let browser = false;
+try {
+    window.crypto;
+    browser = true;
+} catch (err) {
+    browser = false;
+}
+const WebCrypto = browser ? window.crypto : require("@trust/webcrypto");
+const nodeAtob = browser ? null : require('atob');
+const nodeBtoa = browser ? null : require('btoa');
 
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -10,8 +17,8 @@ for (let i = 0; i < chars.length; i++) {
     lookup[chars.charCodeAt(i)] = i;
 }
 
-module.exports = {
-    verify: function(data, sign, publicKeyWrappedBase64) { // data should be a string, sign should be a base64sign (string)
+const crypto = {
+    verify: function (data, sign, publicKeyWrappedBase64) { // data should be a string, sign should be a base64sign (string)
         return new Promise(async (res, rej) => {
             let pub = await this.unwrapKey(publicKeyWrappedBase64, false);
 
@@ -34,11 +41,11 @@ module.exports = {
         });
     },
 
-    unwrapKey: function(key, isPrivate) {
+    unwrapKey: function (key, isPrivate) {
         return new Promise((res, rej) => {
             WebCrypto.subtle.importKey(
                 'jwk',
-                JSON.parse(atob(key)),
+                JSON.parse(browser ? atob(key) : nodeAtob(key)),
                 {
                     name: "RSASSA-PKCS1-v1_5",
                     hash: {name: "SHA-256"},
@@ -49,18 +56,22 @@ module.exports = {
                 .catch(err => rej(err));
         });
     },
-    wrapKey: function(key) {
+    wrapKey: function (key) {
         return new Promise((res, rej) => {
             WebCrypto.subtle.exportKey(
                 'jwk',
                 key)
-                .then(jwk => res(btoa(JSON.stringify(jwk))))
+                .then(jwk => {
+                    let stringifiedJwk = JSON.stringify(jwk);
+                    let wrappedKey = browser ? btoa(stringifiedJwk) : nodeBtoa(stringifiedJwk);
+                    res(wrappedKey);
+                })
                 .catch(err => rej(err));
         });
     },
 
     // Data must be a string, privateKey must be a CryptoKey (UNWRAPPED, in object form)
-    sign: function(data, privateKeyCryptoKey) {
+    sign: function (data, privateKeyCryptoKey) {
         return new Promise((res, rej) => {
             WebCrypto.subtle.sign(
                 {
@@ -82,7 +93,7 @@ module.exports = {
     //      privateKey, (CryptoKey, so it is UNWRAPPED!!!)
     //      publicKey   (CryptoKey, so it is UNWRAPPED!!!)
     // }
-    generateKeyPair: function() {
+    generateKeyPair: function () {
         return new Promise((res, rej) => {
             WebCrypto.subtle.generateKey(
                 {
@@ -98,11 +109,11 @@ module.exports = {
         });
     },
 
-    ab2str: function(buf) {
+    ab2str: function (buf) {
         return String.fromCharCode.apply(null, new Uint16Array(buf));
     },
 
-    str2ab: function(str) {
+    str2ab: function (str) {
         let buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
         let bufView = new Uint16Array(buf);
         for (i = 0, strLen = str.length; i < strLen; i++) {
@@ -116,7 +127,7 @@ module.exports = {
         let bytes = new Uint8Array(arraybuffer),
             i, len = bytes.length, base64 = "";
 
-        for (i = 0; i < len; i+=3) {
+        for (i = 0; i < len; i += 3) {
             base64 += chars[bytes[i] >> 2];
             base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
             base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
@@ -148,11 +159,11 @@ module.exports = {
         let arraybuffer = new ArrayBuffer(bufferLength),
             bytes = new Uint8Array(arraybuffer);
 
-        for (i = 0; i < len; i+=4) {
+        for (i = 0; i < len; i += 4) {
             encoded1 = lookup[base64.charCodeAt(i)];
-            encoded2 = lookup[base64.charCodeAt(i+1)];
-            encoded3 = lookup[base64.charCodeAt(i+2)];
-            encoded4 = lookup[base64.charCodeAt(i+3)];
+            encoded2 = lookup[base64.charCodeAt(i + 1)];
+            encoded3 = lookup[base64.charCodeAt(i + 2)];
+            encoded4 = lookup[base64.charCodeAt(i + 3)];
 
             bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
             bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
@@ -163,3 +174,8 @@ module.exports = {
     }
 
 };
+
+if (browser)
+    window.transCrypto = crypto;
+else
+    module.exports = crypto;
